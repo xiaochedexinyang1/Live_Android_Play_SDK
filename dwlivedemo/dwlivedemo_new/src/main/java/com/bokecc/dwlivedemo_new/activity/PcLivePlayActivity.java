@@ -325,7 +325,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         mExitPopup.setOKClickListener(new CommonPopup.OnOKClickListener() {
             @Override
             public void onClick() {
-                //TODO
                 finish();
             }
         });
@@ -385,7 +384,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         dwLive.setRtcClientParameters(rtcClientListener, localRender, remoteRender);
     }
 
-    public boolean isRtc = false; // TODO 回头看一下，是否需要删除掉
+    public boolean isRtc = false;
 
     public void onApplyRtc() {
 

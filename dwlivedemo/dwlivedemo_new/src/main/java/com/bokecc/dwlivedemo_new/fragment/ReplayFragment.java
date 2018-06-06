@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Html;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -13,9 +14,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.bokecc.dwlivedemo_new.R;
 import com.bokecc.dwlivedemo_new.activity.ReplayActivity;
+import com.bokecc.dwlivedemo_new.activity.ReplayFlexibleActivity;
 import com.bokecc.dwlivedemo_new.base.BasePopupWindow;
 import com.bokecc.dwlivedemo_new.popup.TxtLoadingPopup;
 import com.bokecc.dwlivedemo_new.view.LoginLineLayout;
@@ -24,6 +27,7 @@ import com.bokecc.sdk.mobile.live.pojo.PublishInfo;
 import com.bokecc.sdk.mobile.live.pojo.TemplateInfo;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplay;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplayLoginListener;
+import com.bokecc.sdk.mobile.live.replay.pojo.ReplayLoginInfo;
 
 import java.util.Map;
 
@@ -38,6 +42,8 @@ public class ReplayFragment extends BaseFragment {
 
     @BindView(R.id.btn_login_replay)
     Button btnLoginReplay;
+    @BindView(R.id.replay_switch)
+    TextView tvReplaySwitch;
     @BindView(R.id.lll_login_replay_uid)
     LoginLineLayout lllLoginReplayUid;
     @BindView(R.id.lll_login_replay_roomid)
@@ -50,7 +56,6 @@ public class ReplayFragment extends BaseFragment {
     LoginLineLayout lllLoginReplayName;
     @BindView(R.id.lll_login_replay_password)
     LoginLineLayout lllLoginReplayPassword;
-
     @BindView(R.id.ll_replay_login_layout)
     LinearLayout mRoot;
 
@@ -80,7 +85,7 @@ public class ReplayFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.login_replay, container, false);
         ButterKnife.bind(this, view);
-
+        tvReplaySwitch.setText(Html.fromHtml("<u>支持切换回放的Demo页面</u>"));
         lllLoginReplayUid.setHint(getResources().getString(R.string.login_uid_hint)).addOnTextChangeListener(myTextWatcher);
         lllLoginReplayRoomid.setHint(getResources().getString(R.string.login_roomid_hint)).addOnTextChangeListener(myTextWatcher);
         lllLoginReplayLiveid.setHint(getResources().getString(R.string.login_liveid_hint)).addOnTextChangeListener(myTextWatcher);
@@ -88,8 +93,7 @@ public class ReplayFragment extends BaseFragment {
         lllLoginReplayName.setHint(getResources().getString(R.string.login_name_hint)).addOnTextChangeListener(myTextWatcher);
         lllLoginReplayName.maxEditTextLength = nameMax;
         lllLoginReplayPassword.setHint(getResources()
-                .getString(R.string.login_s_password_hint))
-                .addOnTextChangeListener(myTextWatcher)
+                .getString(R.string.login_s_password_hint)).addOnTextChangeListener(myTextWatcher)
                 .setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
 
         preferences = getActivity().getSharedPreferences("replay_login_info", Activity.MODE_PRIVATE);
@@ -98,6 +102,14 @@ public class ReplayFragment extends BaseFragment {
         if (map != null) {
             initEditTextInfo();
         }
+
+        // 点击后进入支持回放切换到demo页面
+        tvReplaySwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(mContext, ReplayFlexibleActivity.class));
+            }
+        });
 
         return view;
     }
@@ -135,6 +147,17 @@ public class ReplayFragment extends BaseFragment {
     public void onClick() {
         mLoadingPopup.show(mRoot);
         isSuccessed = false;
+
+        // 创建登录信息
+        ReplayLoginInfo replayLoginInfo = new ReplayLoginInfo();
+        replayLoginInfo.setUserId(lllLoginReplayUid.getText());
+        replayLoginInfo.setRoomId(lllLoginReplayRoomid.getText());
+        replayLoginInfo.setLiveId(lllLoginReplayLiveid.getText());
+        replayLoginInfo.setRecordId(lllLoginReplayRecordid.getText());
+        replayLoginInfo.setViewerName(lllLoginReplayName.getText());
+        replayLoginInfo.setViewerToken(lllLoginReplayPassword.getText());
+
+        // 设置登录参数
         DWLiveReplay.getInstance().setLoginParams(new DWLiveReplayLoginListener() {
             @Override
             public void onException(final DWLiveException exception) {
@@ -160,8 +183,12 @@ public class ReplayFragment extends BaseFragment {
                 });
 
             }
-        },false , lllLoginReplayUid.getText(), lllLoginReplayRoomid.getText(), lllLoginReplayLiveid.getText(), lllLoginReplayRecordid.getText(), lllLoginReplayName.getText(), lllLoginReplayPassword.getText());
+        }, replayLoginInfo);
 
+        // 设置是否使用Https
+        DWLiveReplay.getInstance().setSecure(false);
+
+        // 执行登录操作
         DWLiveReplay.getInstance().startLogin();
     }
 

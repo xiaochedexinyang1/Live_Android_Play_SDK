@@ -15,22 +15,25 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+/**
+ * 观看直播 & 观看回放 入口选择页
+ */
 public class PilotActivity extends AppCompatActivity {
 
     @BindView(R.id.btn_start_live)
-    PilotButton btnStartLive;
+    PilotButton btnStartLive;    // 观看直播 按钮
 
     @BindView(R.id.btn_start_replay)
-    PilotButton btnStartReplay;
+    PilotButton btnStartReplay;   // 观看回放 按钮
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DWApplication.mAppStatus = 0; // 当前状态正常
         super.onCreate(savedInstanceState);
 
+        // 设置全屏
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-//        requestWindowFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.activity_pilot);
 
         HttpUtil.LOG_LEVEL = HttpUtil.HttpLogLevel.DETAIL;

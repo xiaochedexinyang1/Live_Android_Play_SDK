@@ -14,8 +14,7 @@
     <LinearLayout style="@style/loginInfosLayoutTheme">
 
         <RelativeLayout style="@style/loginLineLayoutTheme">
-            <TextView
-                android:text="CC账号ID"
+            <TextView android:text="CC账号ID"
                 style="@style/loginLineTextViewTheme" />
             <com.bokecc.dwlivedemo_new.view.LoginLineLayout
                 android:id="@+id/lll_login_replay_uid"
@@ -25,8 +24,7 @@
         </RelativeLayout>
 
         <RelativeLayout style="@style/loginLineLayoutTheme">
-            <TextView
-                android:text="直播间ID"
+            <TextView android:text="直播间ID"
                 style="@style/loginLineTextViewTheme" />
             <com.bokecc.dwlivedemo_new.view.LoginLineLayout
                 android:id="@+id/lll_login_replay_roomid"
@@ -36,8 +34,7 @@
         </RelativeLayout>
 
         <RelativeLayout style="@style/loginLineLayoutTheme">
-            <TextView
-                android:text="直播ID"
+            <TextView android:text="直播ID"
                 style="@style/loginLineTextViewTheme" />
             <com.bokecc.dwlivedemo_new.view.LoginLineLayout
                 android:id="@+id/lll_login_replay_liveid"
@@ -47,8 +44,7 @@
         </RelativeLayout>
 
         <RelativeLayout style="@style/loginLineLayoutTheme">
-            <TextView
-                android:text="回放ID"
+            <TextView android:text="回放ID"
                 style="@style/loginLineTextViewTheme" />
             <com.bokecc.dwlivedemo_new.view.LoginLineLayout
                 android:id="@+id/lll_login_replay_recordid"
@@ -58,8 +54,7 @@
         </RelativeLayout>
 
         <RelativeLayout style="@style/loginLineLayoutTheme">
-            <TextView
-                android:text="昵称"
+            <TextView android:text="昵称"
                 style="@style/loginLineTextViewTheme" />
             <com.bokecc.dwlivedemo_new.view.LoginLineLayout
                 android:id="@+id/lll_login_replay_name"
@@ -69,17 +64,23 @@
         </RelativeLayout>
 
         <RelativeLayout style="@style/loginLineLayoutTheme">
-            <TextView
-                android:text="密码"
+            <TextView android:text="密码"
                 style="@style/loginLineTextViewTheme" />
             <com.bokecc.dwlivedemo_new.view.LoginLineLayout
                 android:id="@+id/lll_login_replay_password"
                 style="@style/loginLayoutTheme" />
         </RelativeLayout>
-    </LinearLayout>>
+    </LinearLayout>
 
     <Button
         android:id="@+id/btn_login_replay"
         android:text="登录"
         style="@style/loginButtonTheme" />
+
+    <TextView
+        android:id="@+id/replay_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_gravity="bottom|center_horizontal"/>
 </LinearLayout>

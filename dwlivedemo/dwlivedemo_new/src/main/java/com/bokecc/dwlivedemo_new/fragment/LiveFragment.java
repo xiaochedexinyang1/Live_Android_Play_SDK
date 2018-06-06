@@ -21,6 +21,7 @@ import com.bokecc.dwlivedemo_new.view.LoginLineLayout;
 import com.bokecc.sdk.mobile.live.DWLive;
 import com.bokecc.sdk.mobile.live.DWLiveLoginListener;
 import com.bokecc.sdk.mobile.live.Exception.DWLiveException;
+import com.bokecc.sdk.mobile.live.pojo.LoginInfo;
 import com.bokecc.sdk.mobile.live.pojo.PublishInfo;
 import com.bokecc.sdk.mobile.live.pojo.RoomInfo;
 import com.bokecc.sdk.mobile.live.pojo.TemplateInfo;
@@ -102,6 +103,15 @@ public class LiveFragment extends BaseFragment {
     public void onClick() {
         mLoadingPopup.show(mRoot);
         isSuccessed = false;
+
+        // 创建登录信息
+        LoginInfo loginInfo = new LoginInfo();
+        loginInfo.setRoomId(lllLoginLiveRoomid.getText());
+        loginInfo.setUserId(lllLoginLiveUid.getText());
+        loginInfo.setViewerName(lllLoginLiveName.getText());
+        loginInfo.setViewerToken(lllLoginLivePassword.getText());
+
+        // 设置登录参数
         DWLive.getInstance().setDWLiveLoginParams(new DWLiveLoginListener() {
             @Override
             public void onLogin(TemplateInfo templateInfo, Viewer viewer, RoomInfo roomInfo, PublishInfo publishInfo) {
@@ -126,8 +136,12 @@ public class LiveFragment extends BaseFragment {
                     }
                 });
             }
-        }, lllLoginLiveUid.getText(), lllLoginLiveRoomid.getText(), lllLoginLiveName.getText(), lllLoginLivePassword.getText());
+        }, loginInfo);
 
+        // 设置是否使用Https
+        DWLive.getInstance().setSecure(true);
+
+        // 执行登录操作
         DWLive.getInstance().startLogin();
     }
 

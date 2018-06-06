@@ -108,11 +108,9 @@
             android:layout_height="50dp"
             android:id="@+id/pc_portrait_progressBar" />
 
-
     </RelativeLayout>
 
     <RelativeLayout
-        android:visibility="invisible"
         android:background="#FFFFFF"
         android:id="@+id/pc_live_infos_layout"
         android:layout_weight="2"

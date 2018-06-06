@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E3E3E3"
+    android:orientation="vertical">
+
+
+    <RelativeLayout
+        android:id="@+id/replay_top_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000">
+
+        <TextureView
+            android:id="@+id/replay_textureview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <include layout="@layout/replay_player_layout" />
+
+        <ProgressBar
+            android:id="@+id/pc_portrait_progressBar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true"
+            android:indeterminateTint="#99FFFFFF"
+            android:indeterminateTintMode="src_atop" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/pc_live_infos_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:background="#FFFFFF"
+        android:visibility="invisible">
+
+        <include layout="@layout/live_pc_portrait_msg_layout" />
+
+    </RelativeLayout>
+
+
+    <!-- 回放切换按钮区域 -->
+    <LinearLayout
+        android:id="@+id/swith_layer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/replay_one"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="回放1"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/replay_two"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="回放2"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/replay_three"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="回放3"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+</LinearLayout>
