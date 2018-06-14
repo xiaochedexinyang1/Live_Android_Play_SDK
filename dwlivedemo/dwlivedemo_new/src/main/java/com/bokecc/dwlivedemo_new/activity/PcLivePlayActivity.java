@@ -114,6 +114,8 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         IMediaPlayer.OnPreparedListener,
         IMediaPlayer.OnVideoSizeChangedListener {
 
+    private static final String TAG = "PcLivePlayActivity";
+
     @BindView(R.id.pc_live_main)
     LinearLayout pc_live_main;
 
@@ -970,6 +972,22 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             });
         }
 
+        /**
+         * 回调当前翻页的信息<br/>
+         * 注意：<br/>
+         * 白板docTotalPage一直为0，pageNum从1开始<br/>
+         * 其他文档docTotalPage为正常页数，pageNum从0开始
+         *
+         * @param docId        文档Id
+         * @param docName      文档名称
+         * @param pageNum      当前页码
+         * @param docTotalPage 当前文档总共的页数
+         */
+        @Override
+        public void onPageChange(String docId, String docName, int pageNum, int docTotalPage) {
+            Log.i(TAG, "文档ID ：" + docId + ", 文档名称：" + docName + ", 当前页码：" + pageNum + ", 总共页数：" + docTotalPage);
+        }
+
         @Override
         public void onNotification(String s) {
             Log.e("onNotification", s);
@@ -1323,21 +1341,13 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         super.onPause();
     }
 
-    boolean isOnResumeStart = false;
 
     @Override
     protected void onResume() {
         super.onResume();
-
         // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
         if (inDocFullMode) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
-
-        isOnResumeStart = false;
-        if (surface != null) {
-            dwLive.start(surface);
-            isOnResumeStart = true;
         }
     }
 
@@ -1346,10 +1356,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
         surface = new Surface(surfaceTexture);
-        if (isOnResumeStart) {
-            return;
-        }
-
         if (player.isPlaying()) {
             player.setSurface(surface);
         } else {

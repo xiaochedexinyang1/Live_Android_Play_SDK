@@ -13,6 +13,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
@@ -44,6 +45,7 @@ import com.bokecc.sdk.mobile.live.Exception.DWLiveException;
 import com.bokecc.sdk.mobile.live.pojo.Answer;
 import com.bokecc.sdk.mobile.live.pojo.Question;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayAnswerMsg;
+import com.bokecc.sdk.mobile.live.replay.pojo.ReplayBroadCastMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayChatMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayPageInfo;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayQAMsg;
@@ -76,6 +78,8 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         IMediaPlayer.OnInfoListener,
         IMediaPlayer.OnVideoSizeChangedListener,
         IMediaPlayer.OnCompletionListener{
+
+    private final static String TAG = "ReplayActivity";
 
     @BindView(R.id.textureview_pc_live_play)
     TextureView mPlayerContainer;
@@ -293,9 +297,43 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
         }
 
+        /**
+         * 广播信息
+         *
+         * @param broadCastMsgList 广播信息列表
+         */
+        @Override
+        public void onBroadCastMessage(ArrayList<ReplayBroadCastMsg> broadCastMsgList) {
+            if (broadCastMsgList == null) {
+                return;
+            }
+
+            if (broadCastMsgList.size() > 0) {
+                for (ReplayBroadCastMsg broadCastMsg : broadCastMsgList) {
+                    Log.i(TAG, "广播内容 ：" + broadCastMsg.getContent() + ", 发布时间：" + broadCastMsg.getTime());
+                }
+            }
+        }
+
         @Override
         public void onPageInfoList(ArrayList<ReplayPageInfo> infoList) {
             // TODO 回放页面信息列表
+        }
+
+        /**
+         * 回调当前翻页的信息<br/>
+         * 注意：<br/>
+         * 白板docTotalPage一直为0，pageNum从1开始<br/>
+         * 其他文档docTotalPage为正常页数，pageNum从0开始
+         *
+         * @param docId        文档Id
+         * @param docName      文档名称
+         * @param pageNum      当前页码
+         * @param docTotalPage 当前文档总共的页数
+         */
+        @Override
+        public void onPageChange(String docId, String docName, int pageNum, int docTotalPage) {
+            Log.i(TAG, "文档ID ：" + docId + ", 文档名称：" + docName + ", 当前页码：" + pageNum + ", 总共页数：" + docTotalPage);
         }
 
         @Override
@@ -357,16 +395,10 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         super.onPause();
     }
 
-    boolean isOnResumeStart = false;
 
     @Override
     protected void onResume() {
         super.onResume();
-        isOnResumeStart = false;
-        if (surface != null) {
-            dwLiveLocalReplay.start(surface);
-            isOnResumeStart = true;
-        }
     }
 
     Surface surface;
@@ -374,9 +406,6 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
         surface = new Surface(surfaceTexture);
-        if (isOnResumeStart) {
-            return;
-        }
         dwLiveLocalReplay.start(surface);
     }
 

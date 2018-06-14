@@ -37,5 +37,6 @@ dependencies {
     compile 'com.tencent.bugly:nativecrashreport:latest.release'
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile files('libs/core.jar')
-    compile files('libs/dwlivesdk.jar')
+    implementation files('libs/dwlivesdk.jar')
+    implementation files('libs/org.apache.http.legacy.jar')
 }
