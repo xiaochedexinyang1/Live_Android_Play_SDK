@@ -12,8 +12,6 @@ import com.tencent.bugly.crashreport.CrashReport;
  */
 public class DWApplication extends Application {
 
-    public static int mAppStatus = -1; // 表示 force_kill
-
     public static final boolean RTC_AUDIO = false; // 是否使用语音连麦 （true-使用 ／ false-不使用，采用视频连麦）
 
     public static final boolean REPLAY_CHAT_FOLLOW_TIME = true; // 是否让回放的聊天内容随时间轴推进展示
@@ -30,7 +28,7 @@ public class DWApplication extends Application {
             context = this;
         }
         // 异常统计
-        CrashReport.initCrashReport(getApplicationContext(), "32421e5c07", true);
+        CrashReport.initCrashReport(getApplicationContext(), "636ee61162", true);
         // CC PUSH SDK
         DWPushEngine.init(this, BuildConfig.LOG_FLAG);
         // 初始化日志记录模块

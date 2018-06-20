@@ -11,7 +11,6 @@ public class SplashActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        DWApplication.mAppStatus = 0; // 当前状态正常
         super.onCreate(savedInstanceState);
     }
 

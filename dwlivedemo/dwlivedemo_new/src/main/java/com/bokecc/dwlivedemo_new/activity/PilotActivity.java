@@ -28,7 +28,6 @@ public class PilotActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        DWApplication.mAppStatus = 0; // 当前状态正常
         super.onCreate(savedInstanceState);
 
         // 设置全屏
