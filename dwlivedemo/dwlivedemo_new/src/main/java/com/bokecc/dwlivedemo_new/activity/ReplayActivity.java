@@ -411,12 +411,21 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         stopNetworkTimer();
     }
 
+    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
+    boolean isOnResumeStart = false;
+
     @Override
     protected void onResume() {
         super.onResume();
         // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
         if (inDocFullMode) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
+        isOnResumeStart = false;
+        if (surface != null) {
+            dwLiveReplay.start(surface);
+            isOnResumeStart = true;
         }
     }
 
@@ -425,6 +434,9 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
         surface = new Surface(surfaceTexture);
+        if (isOnResumeStart) {
+            return;
+        }
         dwLiveReplay.start(surface);
     }
 
@@ -531,7 +543,9 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
                                         temp_qaInfoMap.put(key, qaInfo);
                                     }
                                 }
-                                qaLayoutController.addReplayQAInfos(temp_qaInfoMap);
+                                if (qaLayoutController != null) {
+                                    qaLayoutController.addReplayQAInfos(temp_qaInfoMap);
+                                }
                             }
                         });
                     }

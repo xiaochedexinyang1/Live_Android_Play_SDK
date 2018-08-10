@@ -55,10 +55,10 @@ dependencies {
     // Glide
     compile 'com.github.bumptech.glide:glide:3.7.0'
     // CC
-    compile 'com.squareup.okhttp3:okhttp:3.3.1'
-    compile('io.socket:socket.io-client:0.7.0') {
-     exclude group: 'org.json', module: 'json'
-    }
+     compile 'com.squareup.okhttp3:okhttp:3.3.1'
+     compile('io.socket:socket.io-client:0.7.0') {
+         exclude group: 'org.json', module: 'json'
+     }
     compile files('libs/dwpush.jar')
     implementation files('libs/dwlivesdk.jar')
     implementation files('libs/libjingle_peerconnection.jar')

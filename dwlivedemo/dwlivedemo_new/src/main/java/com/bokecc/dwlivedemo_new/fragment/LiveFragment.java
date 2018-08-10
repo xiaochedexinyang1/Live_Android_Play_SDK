@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.bokecc.dwlivedemo_new.R;
 import com.bokecc.dwlivedemo_new.activity.PcLivePlayActivity;
@@ -21,6 +22,7 @@ import com.bokecc.dwlivedemo_new.view.LoginLineLayout;
 import com.bokecc.sdk.mobile.live.DWLive;
 import com.bokecc.sdk.mobile.live.DWLiveLoginListener;
 import com.bokecc.sdk.mobile.live.Exception.DWLiveException;
+import com.bokecc.sdk.mobile.live.pojo.LiveInfo;
 import com.bokecc.sdk.mobile.live.pojo.LoginInfo;
 import com.bokecc.sdk.mobile.live.pojo.PublishInfo;
 import com.bokecc.sdk.mobile.live.pojo.RoomInfo;
@@ -121,6 +123,12 @@ public class LiveFragment extends BaseFragment {
                     @Override
                     public void run() {
                         mLoadingPopup.dismiss();
+                        // 获取直播信息必须在登录成功之后再获取，否则为空
+                        LiveInfo liveInfo = DWLive.getInstance().getLiveInfo();
+                        if (liveInfo != null) {
+                            Toast.makeText(mContext, "直播开始时间：" + liveInfo.getLiveStartTime() + "\n"
+                                    + "直播持续时间：" +  liveInfo.getLiveDuration(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
             }

@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bokecc.dwlivedemo_new.R;
 import com.bokecc.dwlivedemo_new.activity.ReplayActivity;
@@ -27,6 +28,7 @@ import com.bokecc.sdk.mobile.live.pojo.PublishInfo;
 import com.bokecc.sdk.mobile.live.pojo.TemplateInfo;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplay;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplayLoginListener;
+import com.bokecc.sdk.mobile.live.replay.pojo.ReplayLiveInfo;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayLoginInfo;
 
 import java.util.Map;
@@ -179,6 +181,13 @@ public class ReplayFragment extends BaseFragment {
                     @Override
                     public void run() {
                         mLoadingPopup.dismiss();
+
+                        // 回放的直播开始时间和结束时间必须在登录成功后再获取，否则为空
+                        ReplayLiveInfo replayLiveInfo = DWLiveReplay.getInstance().getReplayLiveInfo();
+                        if (replayLiveInfo != null) {
+                            Toast.makeText(mContext, "直播开始时间：" + replayLiveInfo.getStartTime() + "\n"
+                                    + "直播结束时间：" +  replayLiveInfo.getEndTime(), Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
 

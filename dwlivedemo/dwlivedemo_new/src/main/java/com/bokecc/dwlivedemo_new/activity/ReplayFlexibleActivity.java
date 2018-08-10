@@ -44,6 +44,7 @@ import com.bokecc.sdk.mobile.live.replay.flexible.DWLiveFlexibleReplay;
 import com.bokecc.sdk.mobile.live.replay.flexible.DWLiveFlexibleReplayListener;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayAnswerMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayChatMsg;
+import com.bokecc.sdk.mobile.live.replay.pojo.ReplayLiveInfo;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayLoginInfo;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayQAMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayQuestionMsg;
@@ -387,6 +388,13 @@ public class ReplayFlexibleActivity extends Activity implements TextureView.Surf
             public void run() {
                 // 设置直播间标题
                 tvReplayTitle.setText(Html.fromHtml(roomInfo.getName()));
+
+                // 回放的直播开始时间和结束时间必须在登录成功后再获取，否则为空
+                ReplayLiveInfo replayLiveInfo = DWLiveFlexibleReplay.getInstance().getReplayLiveInfo();
+                if (replayLiveInfo != null) {
+                    Toast.makeText(ReplayFlexibleActivity.this, "直播开始时间：" + replayLiveInfo.getStartTime() + "\n"
+                            + "直播结束时间：" +  replayLiveInfo.getEndTime(), Toast.LENGTH_LONG).show();
+                }
             }
         });
     }

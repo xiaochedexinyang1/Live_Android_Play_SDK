@@ -396,9 +396,17 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     }
 
 
+    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
+    boolean isOnResumeStart = false;
+
     @Override
     protected void onResume() {
         super.onResume();
+        isOnResumeStart = false;
+        if (surface != null) {
+            dwLiveLocalReplay.start(surface);
+            isOnResumeStart = true;
+        }
     }
 
     Surface surface;
@@ -406,6 +414,9 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
         surface = new Surface(surfaceTexture);
+        if (isOnResumeStart) {
+            return;
+        }
         dwLiveLocalReplay.start(surface);
     }
 
