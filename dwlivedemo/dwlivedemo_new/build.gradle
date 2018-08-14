@@ -60,6 +60,6 @@ dependencies {
          exclude group: 'org.json', module: 'json'
      }
     compile files('libs/dwpush.jar')
-    implementation files('libs/dwlivesdk.jar')
     implementation files('libs/libjingle_peerconnection.jar')
+    implementation files('libs/dwlivesdk.jar')
 }

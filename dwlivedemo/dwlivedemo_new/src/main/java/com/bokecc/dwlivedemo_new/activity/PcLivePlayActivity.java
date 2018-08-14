@@ -79,6 +79,7 @@ import com.bokecc.sdk.mobile.live.DWLiveListener;
 import com.bokecc.sdk.mobile.live.DWLivePlayer;
 import com.bokecc.sdk.mobile.live.Exception.DWLiveException;
 import com.bokecc.sdk.mobile.live.pojo.Answer;
+import com.bokecc.sdk.mobile.live.pojo.BroadCastMsg;
 import com.bokecc.sdk.mobile.live.pojo.ChatMessage;
 import com.bokecc.sdk.mobile.live.pojo.PrivateChatInfo;
 import com.bokecc.sdk.mobile.live.pojo.QualityInfo;
@@ -993,7 +994,44 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             Log.e("onNotification", s);
         }
 
-        // 接收到广播信息
+        /**
+         * 收到历史广播信息(目前服务端只返回最后一条历史广播)
+         *
+         * @param msgs 广播消息列表
+         */
+        @Override
+        public void onHistoryBroadcastMsg(final ArrayList<BroadCastMsg> msgs) {
+            // 判断空
+            if (msgs == null) {
+                return;
+            }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (chatLayoutController != null) {
+                        for (int i = 0; i < msgs.size(); i++) {
+                            // 构建一个对象
+                            ChatEntity chatEntity = new ChatEntity();
+                            chatEntity.setUserId("");
+                            chatEntity.setUserName("");
+                            chatEntity.setPrivate(false);
+                            chatEntity.setPublisher(true);
+                            chatEntity.setMsg("系统消息: " + msgs.get(i).getContent());
+                            chatEntity.setTime("");
+                            chatEntity.setUserAvatar("");
+                            chatLayoutController.addChatEntity(chatEntity);
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * 收到广播信息（实时）
+         *
+         * @param msg 广播消息
+         */
         @Override
         public void onBroadcastMsg(final String msg) {
 
