@@ -75,7 +75,7 @@
         android:layout_height="match_parent">
 
         <ImageView
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="5dp"
             android:id="@+id/iv_portrait_live_change_audio_video"
             android:src="@mipmap/video_ic_live_nor"
             android:layout_marginBottom="10dp"
@@ -89,6 +89,7 @@
             android:layout_marginBottom="10dp"
             android:layout_height="wrap_content" />
 
+        <!-- 视频全屏 -->
         <ImageView
             android:id="@+id/iv_portrait_live_full"
             android:src="@mipmap/video_ic_full_nor"
@@ -102,6 +103,7 @@
         android:layout_alignParentLeft="true"
         android:gravity="center"
         android:layout_marginLeft="15dp"
+        android:layout_marginTop="5dp"
         android:orientation="vertical"
         android:layout_width="wrap_content"
         android:layout_height="match_parent">
@@ -110,12 +112,20 @@
             android:id="@+id/iv_portrait_live_rtc"
             android:src="@mipmap/video_ic_lianmai_nor"
             android:layout_width="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="10dp"
             android:layout_height="wrap_content" />
 
         <ImageView
             android:id="@+id/iv_portrait_live_change_line"
             android:src="@mipmap/video_ic_line"
+            android:layout_width="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content" />
+
+        <!-- 文档全屏 -->
+        <ImageView
+            android:id="@+id/iv_portrait_doc_full"
+            android:src="@mipmap/doc_ic_full_nor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 

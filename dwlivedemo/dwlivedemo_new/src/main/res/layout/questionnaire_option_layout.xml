@@ -9,11 +9,21 @@
         android:layout_width="match_parent"
         android:layout_marginTop="15dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="36dp">
+        android:layout_marginLeft="10dp">
+
+        <TextView
+            android:id="@+id/true_flag"
+            android:layout_width="26dp"
+            android:layout_height="wrap_content"
+            android:textColor="#43b50f"
+            android:textSize="10dp"
+            android:visibility="invisible"
+            android:text="正确"/>
 
         <RadioButton
             android:id="@+id/option_radio"
             style="@style/QuestionnaireRadio"
+            android:layout_marginLeft="2dp"
             android:layout_width="20dp"
             android:layout_height="20dp" />
 

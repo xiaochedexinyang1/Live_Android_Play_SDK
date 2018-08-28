@@ -286,7 +286,9 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
                 public void run() {
                     // 如果不需要根据时间轴展示，就直接交给UI去做展示
                     if (!DWApplication.REPLAY_QA_FOLLOW_TIME) {
-                        qaLayoutController.addReplayQAInfos(mQaInfoMap);
+                        if (qaLayoutController != null) {
+                            qaLayoutController.addReplayQAInfos(mQaInfoMap);
+                        }
                     }
                 }
             });
@@ -741,6 +743,23 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     private boolean inDocFullMode;  // 当前是否在文档全屏模式
     private DocView docView;
 
+    // 双击全屏相关
+    boolean isMove = false;
+    private final static int DOUBLE_TAP_TIMEOUT = 200;
+    private MotionEvent mPreviousUpEvent;
+
+    /**
+     * 检测是否是双击
+     */
+    private boolean isConsideredDoubleTap(MotionEvent firstUp, MotionEvent secondDown){
+        if (secondDown.getEventTime() - firstUp.getEventTime() > DOUBLE_TAP_TIMEOUT) {
+            return false;
+        }
+        int deltaX =(int) firstUp.getX() - (int)secondDown.getX();
+        int deltaY =(int) firstUp.getY()- (int)secondDown.getY();
+        return deltaX * deltaX + deltaY * deltaY < 10000;
+    }
+
     private void initViewPager() {
 
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -750,25 +769,28 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
             docView = docLayoutController.getDocView();
             docView.setClickable(true); // 设置文档区域可点击
 
-            // 定义手势监听 -- 双击切换当前屏幕方向
-            final GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-
+            // 设置触摸监听，判断双击事件
+            docView.setTouchEventListener(new DocView.TouchEventListener() {
                 @Override
-                public boolean onDoubleTap(MotionEvent e) {
-                    if (isPortrait()) {
-                        toDocFullMode = true;
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    } else {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                public void onTouchEvent(MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                        isMove = true;
                     }
-                    return true;
-                }
-            });
-
-            docView.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return gestureDetector.onTouchEvent(event);
+                    else if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        if (mPreviousUpEvent != null && isConsideredDoubleTap(mPreviousUpEvent, event)) {
+                            if (isPortrait()) {
+                                // 进入文档全屏
+                                toDocFullMode = true;
+                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                            } else {
+                                // 退出文档全屏
+                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                            }
+                        }
+                    }else if (event.getAction() == MotionEvent.ACTION_UP){
+                        mPreviousUpEvent = MotionEvent.obtain(event);
+                        isMove = false;
+                    }
                 }
             });
 

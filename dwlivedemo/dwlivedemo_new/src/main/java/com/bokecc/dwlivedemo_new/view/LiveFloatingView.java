@@ -2,6 +2,7 @@ package com.bokecc.dwlivedemo_new.view;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -51,7 +52,11 @@ public class LiveFloatingView {
 
         wmParams = new WindowManager.LayoutParams();
         // TYPE_TOAST 生命周期不兼容
-        wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        }
         wmParams.format = PixelFormat.TRANSLUCENT;
         wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
         wmParams.gravity = Gravity.LEFT | Gravity.TOP;

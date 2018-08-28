@@ -14,17 +14,17 @@ import android.widget.Toast;
 import com.bokecc.dwlivedemo_new.R;
 import com.bokecc.dwlivedemo_new.activity.ReplayActivity;
 import com.bokecc.dwlivedemo_new.util.TimeUtil;
+import com.bokecc.sdk.mobile.live.pojo.RoomInfo;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplay;
-import com.bokecc.sdk.mobile.live.util.LogUtil;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-/**
- * Created by liufh on 2016/12/27.
- */
 
+/**
+ * 回放播放页播放相关界面管理类
+ */
 public class ReplayPlayerManager {
 
     @BindView(R.id.replay_title)
@@ -98,7 +98,10 @@ public class ReplayPlayerManager {
 
 
     public void init() {
-        mTitle.setText(DWLiveReplay.getInstance().getRoomInfo().getName());
+        RoomInfo roomInfo = DWLiveReplay.getInstance().getRoomInfo();
+        if (roomInfo != null) {
+            mTitle.setText(roomInfo.getName());
+        }
     }
 
     @OnClick({R.id.replay_back, R.id.replay_play_icon, R.id.replay_full_screen, R.id.replay_speed})

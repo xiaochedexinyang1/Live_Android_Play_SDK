@@ -63,6 +63,7 @@ import com.bokecc.dwlivedemo_new.popup.ExeternalQuestionnairePopup;
 import com.bokecc.dwlivedemo_new.popup.LotteryPopup;
 import com.bokecc.dwlivedemo_new.popup.LotteryStartPopup;
 import com.bokecc.dwlivedemo_new.popup.QuestionnairePopup;
+import com.bokecc.dwlivedemo_new.popup.QuestionnaireStatisPopup;
 import com.bokecc.dwlivedemo_new.popup.QuestionnaireStopPopup;
 import com.bokecc.dwlivedemo_new.popup.RollCallPopup;
 import com.bokecc.dwlivedemo_new.popup.RtcPopup;
@@ -85,6 +86,7 @@ import com.bokecc.sdk.mobile.live.pojo.PrivateChatInfo;
 import com.bokecc.sdk.mobile.live.pojo.QualityInfo;
 import com.bokecc.sdk.mobile.live.pojo.Question;
 import com.bokecc.sdk.mobile.live.pojo.QuestionnaireInfo;
+import com.bokecc.sdk.mobile.live.pojo.QuestionnaireStatisInfo;
 import com.bokecc.sdk.mobile.live.rtc.RtcClient;
 import com.bokecc.sdk.mobile.live.widget.DocView;
 import com.bokecc.sdk.mobile.push.chat.model.ChatUser;
@@ -243,6 +245,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     private QuestionnairePopup mQuestionnairePopup;  // 问卷弹出界面
     private QuestionnaireStopPopup mQuestionnaireStopPopup; // 问卷结束弹出界面
     private ExeternalQuestionnairePopup mExeternalQuestionnairePopup; // 第三方问卷弹出界面
+    private QuestionnaireStatisPopup mQuestionnaireStatisPopup; // 问卷统计界面
 
     private View mRoot;
     private DWLivePlayer player;
@@ -296,6 +299,8 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         initQuestionnairePopup();
 
         initQuestionnaireStopPopup();
+
+        initQuestionnaireStatis();
 
         initViewPager();
 
@@ -364,6 +369,11 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
                 }
             }
         });
+    }
+
+    /** 初始化问卷统计弹出界面 */
+    private void initQuestionnaireStatis() {
+        mQuestionnaireStatisPopup = new QuestionnaireStatisPopup(this);
     }
 
     private void initPlayer() {
@@ -452,7 +462,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
                     if (!isAllowSpeak) {
                         isSpeaking = false;
                         isRtc = false;
-                        mPlayerContainer.setVisibility(View.VISIBLE);
+                        if (mPlayerContainer != null) {
+                            mPlayerContainer.setVisibility(View.VISIBLE);
+                        }
                         reloadVideo();
                         rtcPopup.dismiss();
 
@@ -496,8 +508,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
                     } else {
                         player.pause();
                         player.stop();
-                        mPlayerContainer.setVisibility(View.INVISIBLE);
-
+                        if (mPlayerContainer != null) {
+                            mPlayerContainer.setVisibility(View.INVISIBLE);
+                        }
                         localRender.setVisibility(View.INVISIBLE);
                         remoteRender.setVisibility(View.VISIBLE);
                         remoteRender.setLayoutParams(getRemoteRenderSizeParams());
@@ -659,7 +672,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         if (isRtc || isSpeaking) {
             dwLive.closeCamera();
             hideVideoRenderAndTips();
-            mPlayerContainer.setVisibility(View.VISIBLE);
+            if (mPlayerContainer != null) {
+                mPlayerContainer.setVisibility(View.VISIBLE);
+            }
             isRtc = false;
             isSpeaking = false;
             stopCmTimer();
@@ -889,7 +904,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
                 public void run() {
                     // 将历史聊天信息添加到UI
                     for (int i = 0; i < chatLogs.size(); i++) {
-                        blPcBarrage.addNewInfo(chatLogs.get(i).getMessage());
+                        if (blPcBarrage != null) {
+                            blPcBarrage.addNewInfo(chatLogs.get(i).getMessage());
+                        }
                         if (chatLayoutController != null) {
                             chatLayoutController.addChatEntity(getChatEntity(chatLogs.get(i)));
                         }
@@ -904,7 +921,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    blPcBarrage.addNewInfo(chatMessage.getMessage());
+                    if (blPcBarrage != null) {
+                        blPcBarrage.addNewInfo(chatMessage.getMessage());
+                    }
 
                     if (chatLayoutController != null) {
                         chatLayoutController.addChatEntity(getChatEntity(chatMessage));
@@ -921,7 +940,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    blPcBarrage.addNewInfo(chatMessage.getMessage());
+                    if (blPcBarrage != null) {
+                        blPcBarrage.addNewInfo(chatMessage.getMessage());
+                    }
 
                     if (chatLayoutController != null) {
                         chatLayoutController.addChatEntity(getChatEntity(chatMessage));
@@ -1001,6 +1022,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
          */
         @Override
         public void onHistoryBroadcastMsg(final ArrayList<BroadCastMsg> msgs) {
+
             // 判断空
             if (msgs == null) {
                 return;
@@ -1118,16 +1140,49 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
 
         }
 
+        /** 封禁 */
         @Override
         public void onBanStream(String reason) {
-
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // 播放器停止播放
+                    if (player != null) {
+                        player.stop();
+                    }
+                    // 展示'直播间已封禁'的标识
+                    if (pcPortraitProgressBar != null) {
+                        pcPortraitProgressBar.setVisibility(View.GONE);
+                    }
+                    if (tvPcPortraitStatusTips != null) {
+                        tvPcPortraitStatusTips.setVisibility(View.VISIBLE);
+                        tvPcPortraitStatusTips.setText("直播间已封禁");
+                    }
+                }
+            });
         }
 
+        /** 解封禁 */
         @Override
         public void onUnbanStream() {
-
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (surface != null) {
+                        dwLive.start(surface);
+                    }
+                    hideVideoRenderAndTips();
+                    if (pcPortraitProgressBar != null) {
+                        pcPortraitProgressBar.setVisibility(View.VISIBLE);
+                    }
+                    if (tvPcPortraitStatusTips != null) {
+                        tvPcPortraitStatusTips.setVisibility(View.GONE);
+                    }
+                }
+            });
         }
 
+        /** 公告 */
         @Override
         public void onAnnouncement(final boolean isRemove, final String announcement) {
             runOnUiThread(new Runnable() {
@@ -1282,6 +1337,17 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             });
         }
 
+        @Override
+        public void onQuestionnaireStatis(final QuestionnaireStatisInfo info) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mQuestionnaireStatisPopup.setQuestionnaireStatisInfo(info);
+                    mQuestionnaireStatisPopup.show(mRoot);
+                }
+            });
+        }
+
         public void onExeternalQuestionnairePublish(final String title, final String externalUrl) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -1379,6 +1445,8 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         super.onPause();
     }
 
+    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
+    boolean isOnResumeStart = false;
 
     @Override
     protected void onResume() {
@@ -1386,6 +1454,12 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
         if (inDocFullMode) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
+        isOnResumeStart = false;
+        if (surface != null) {
+            dwLive.start(surface);
+            isOnResumeStart = true;
         }
     }
 
@@ -1584,6 +1658,14 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         pcLivePortraitViewManager.onShowAnnounce();
     }
 
+    // 切换至文档全屏
+    public void onShowDocFull() {
+        if (isPortrait()) {
+            toDocFullMode = true;
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+    }
+
     //------------------------下方布局------------------------
 
     @BindView(R.id.rg_infos_tag)
@@ -1626,6 +1708,23 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     private boolean toDocFullMode;  // 是否要进入文档全屏模式
     private boolean inDocFullMode;  // 当前是否在文档全屏模式
 
+    // 双击全屏相关
+    boolean isMove = false;
+    private final static int DOUBLE_TAP_TIMEOUT = 200;
+    private MotionEvent mPreviousUpEvent;
+
+    /**
+     * 检测是否是双击
+     */
+    private boolean isConsideredDoubleTap(MotionEvent firstUp, MotionEvent secondDown){
+        if (secondDown.getEventTime() - firstUp.getEventTime() > DOUBLE_TAP_TIMEOUT) {
+            return false;
+        }
+        int deltaX =(int) firstUp.getX() - (int)secondDown.getX();
+        int deltaY =(int) firstUp.getY()- (int)secondDown.getY();
+        return deltaX * deltaX + deltaY * deltaY < 10000;
+    }
+
     private void initViewPager() {
 
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -1634,24 +1733,28 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             initDocLayout(inflater);
             docView = docLayoutController.getDocView();
             docView.setClickable(true);
-            final GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
 
+            // 设置触摸监听，判断双击事件
+            docView.setTouchEventListener(new DocView.TouchEventListener() {
                 @Override
-                public boolean onDoubleTap(MotionEvent e) {
-                    if (isPortrait()) {
-                        toDocFullMode = true;
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                    } else {
-                        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                public void onTouchEvent(MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                        isMove = true;
                     }
-                    return true;
-                }
-            });
-
-            docView.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return gestureDetector.onTouchEvent(event);
+                    else if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        if (mPreviousUpEvent != null && isConsideredDoubleTap(mPreviousUpEvent, event)) {
+                            if (isPortrait()) {
+                                // 进入文档全屏
+                                onShowDocFull();
+                            } else {
+                                // 退出文档全屏
+                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                            }
+                        }
+                    }else if (event.getAction() == MotionEvent.ACTION_UP){
+                        mPreviousUpEvent = MotionEvent.obtain(event);
+                        isMove = false;
+                    }
                 }
             });
         }
@@ -1930,7 +2033,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
                     String inputText = mInput.getText().toString();
 
                     if (inputText.length() > maxInput) {
-                        Toast.makeText(getApplicationContext(), "字数超过300字", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "字符数超过300字", Toast.LENGTH_SHORT).show();
                         mInput.setText(inputText.substring(0, maxInput));
                         mInput.setSelection(maxInput);
                     }
@@ -1943,6 +2046,16 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             mEmojiGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    if (mInput == null) {
+                        return;
+                    }
+
+                    // 一个表情span占位8个字符
+                    if (mInput.getText().length() + 8 > maxInput) {
+                        Toast.makeText(getApplicationContext(), "字符数超过300字", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     if (position == EmojiUtil.imgs.length - 1) {
                         EmojiUtil.deleteInputOne(mInput);
                     } else {
@@ -2419,11 +2532,11 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         }
 
         public void initIntro() {
-            title.setText(DWLive.getInstance().getRoomInfo().getName());
-
-            content_layer.removeAllViews();
-            content_layer.addView(new MixedTextView(PcLivePlayActivity.this, DWLive.getInstance().getRoomInfo().getDesc()));
-
+            if (DWLive.getInstance().getRoomInfo() != null) {
+                title.setText(DWLive.getInstance().getRoomInfo().getName());
+                content_layer.removeAllViews();
+                content_layer.addView(new MixedTextView(PcLivePlayActivity.this, DWLive.getInstance().getRoomInfo().getDesc()));
+            }
         }
     }
 }

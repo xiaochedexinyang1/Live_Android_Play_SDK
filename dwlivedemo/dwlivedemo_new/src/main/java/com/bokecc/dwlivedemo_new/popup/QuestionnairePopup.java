@@ -33,6 +33,8 @@ public class QuestionnairePopup extends BasePopupWindow implements SocketQuestio
 
     private boolean mHasSubmited;
 
+    private int mSubmitedaction;  // 提交后的操作，非必须，默认为0，0：关闭，1：提交后显示答案
+
     private Context mContext;
     private QuestionnaireInfo mInfo;
 
@@ -73,6 +75,7 @@ public class QuestionnairePopup extends BasePopupWindow implements SocketQuestio
     public void setQuestionnaireInfo(QuestionnaireInfo info) {
         mHasSubmited = false;
         mInfo = info;
+        mSubmitedaction = mInfo.getSubmitedAction();
         tv_tip.setVisibility(View.INVISIBLE);
         btn_submit.setEnabled(true);
         questionnaireAdapter = new QuestionnaireAdapter(mContext, mInfo);
@@ -152,12 +155,23 @@ public class QuestionnairePopup extends BasePopupWindow implements SocketQuestio
         // 提交成功后关闭对话框
         if (isSucceed) {
             mHasSubmited = true;
-            tv_tip.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    dismiss();
-                }
-            }, 3000);
+            //
+            if (mSubmitedaction == 1) {
+                rv_questionnaire_list.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        questionnaireAdapter.showRight();
+                    }
+                });
+            } else {
+                // 如果不需要提交后显示答案，就3秒后消失
+                tv_tip.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        dismiss();
+                    }
+                }, 3000);
+            }
         }
     }
 }

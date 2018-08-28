@@ -3,7 +3,9 @@ package com.bokecc.dwlivedemo_new.manage;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.os.Handler;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -148,7 +150,9 @@ public class PcLiveLandscapeViewManager {
         initAnnouncePopup();
         initSourceChangePopup();
         initDefinitionPopup();
-        mTitle.setText(DWLive.getInstance().getRoomInfo().getName());
+        if (DWLive.getInstance().getRoomInfo() != null) {
+            mTitle.setText(DWLive.getInstance().getRoomInfo().getName());
+        }
     }
 
     private void initEmoji() {
@@ -159,6 +163,14 @@ public class PcLiveLandscapeViewManager {
         mEmojiGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (mInput == null) {
+                    return;
+                }
+                // 一个表情span占位8个字符
+                if (mInput.getText().length() + 8 > maxInput) {
+                    Toast.makeText(mContext, "字符数超过300字", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (position == EmojiUtil.imgs.length - 1) {
                     EmojiUtil.deleteInputOne(mInput);
                 } else {
@@ -168,6 +180,8 @@ public class PcLiveLandscapeViewManager {
         });
     }
 
+    private short maxInput = 300;
+
     private void initChatLayout() {
         mInput.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -176,6 +190,30 @@ public class PcLiveLandscapeViewManager {
                 hideEmoji();
                 handler.removeCallbacks(runnable);
                 return false;
+            }
+        });
+
+        mInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+                String inputText = mInput.getText().toString();
+
+                if (inputText.length() > maxInput) {
+                    Toast.makeText(mContext, "字符数超过300字", Toast.LENGTH_SHORT).show();
+                    mInput.setText(inputText.substring(0, maxInput));
+                    mInput.setSelection(maxInput);
+                }
             }
         });
 

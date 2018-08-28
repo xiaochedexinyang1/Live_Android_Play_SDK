@@ -56,4 +56,11 @@ public class QuestionnaireEditView extends LinearLayout {
     public void removeFocus() {
         mSubjectEdit.clearFocus();
     }
+
+    /**
+     * 禁用编辑框
+     */
+    public void disableEditView() {
+        mSubjectEdit.setEnabled(false);
+    }
 }

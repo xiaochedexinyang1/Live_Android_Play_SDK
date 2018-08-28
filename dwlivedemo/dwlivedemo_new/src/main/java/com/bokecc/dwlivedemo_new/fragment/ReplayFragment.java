@@ -24,7 +24,6 @@ import com.bokecc.dwlivedemo_new.base.BasePopupWindow;
 import com.bokecc.dwlivedemo_new.popup.TxtLoadingPopup;
 import com.bokecc.dwlivedemo_new.view.LoginLineLayout;
 import com.bokecc.sdk.mobile.live.Exception.DWLiveException;
-import com.bokecc.sdk.mobile.live.pojo.PublishInfo;
 import com.bokecc.sdk.mobile.live.pojo.TemplateInfo;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplay;
 import com.bokecc.sdk.mobile.live.replay.DWLiveReplayLoginListener;
@@ -40,6 +39,9 @@ import butterknife.OnClick;
 import static com.bokecc.dwlivedemo_new.util.LoginUtil.isNewLoginButtonEnabled;
 import static com.bokecc.dwlivedemo_new.util.LoginUtil.toast;
 
+/**
+ * 回放登录页面
+ */
 public class ReplayFragment extends BaseFragment {
 
     @BindView(R.id.btn_login_replay)
@@ -73,6 +75,7 @@ public class ReplayFragment extends BaseFragment {
         mLoadingPopup.setOnPopupDismissListener(new BasePopupWindow.OnPopupDismissListener() {
             @Override
             public void onDismiss() {
+                // 回放登录成功后，将登录成功的数据存储到SharePreference
                 if(isSuccessed) {
                     writeSharePreference();
                     Intent intent = new Intent(mContext, ReplayActivity.class);
@@ -144,7 +147,6 @@ public class ReplayFragment extends BaseFragment {
     }
 
     boolean isSuccessed = false;
-    PublishInfo info;
     @OnClick(R.id.btn_login_replay)
     public void onClick() {
         mLoadingPopup.show(mRoot);
@@ -186,7 +188,7 @@ public class ReplayFragment extends BaseFragment {
                         ReplayLiveInfo replayLiveInfo = DWLiveReplay.getInstance().getReplayLiveInfo();
                         if (replayLiveInfo != null) {
                             Toast.makeText(mContext, "直播开始时间：" + replayLiveInfo.getStartTime() + "\n"
-                                    + "直播结束时间：" +  replayLiveInfo.getEndTime(), Toast.LENGTH_LONG).show();
+                                + "直播结束时间：" +  replayLiveInfo.getEndTime(), Toast.LENGTH_LONG).show();
                         }
                     }
                 });

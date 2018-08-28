@@ -25,10 +25,8 @@ import com.bokecc.dwlivedemo_new.adapter.LoginNavLvDownloadAdapter;
 import com.bokecc.dwlivedemo_new.base.BaseActivity;
 import com.bokecc.dwlivedemo_new.fragment.BaseFragment;
 import com.bokecc.dwlivedemo_new.fragment.LiveFragment;
-import com.bokecc.dwlivedemo_new.fragment.PushFragment;
 import com.bokecc.dwlivedemo_new.fragment.ReplayFragment;
 import com.bokecc.dwlivedemo_new.third.scan.qr_codescan.MipcaActivityCapture;
-import com.bokecc.dwlivedemo_new.view.LoginPopupWIndow;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -143,7 +141,6 @@ public class LoginActivity extends BaseActivity {
         popupWindow.showAsDropDown(tvNavTitle,  -1 * tvNavTitle.getWidth() / 2, 0);
     }
 
-    LoginPopupWIndow loginPopupWIndow = new LoginPopupWIndow();
     LoginNavLvDownloadAdapter loginNavLvDownloadAdapter;
     PopupWindow popupWindow;
     void initTitleMenu() {

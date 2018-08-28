@@ -116,19 +116,13 @@ public class LiveFragment extends BaseFragment {
         // 设置登录参数
         DWLive.getInstance().setDWLiveLoginParams(new DWLiveLoginListener() {
             @Override
-            public void onLogin(TemplateInfo templateInfo, Viewer viewer, RoomInfo roomInfo, PublishInfo publishInfo) {
+            public void onLogin(TemplateInfo templateInfo, Viewer viewer, final RoomInfo roomInfo, PublishInfo publishInfo) {
                 isSuccessed = true;
                 info = publishInfo;
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mLoadingPopup.dismiss();
-                        // 获取直播信息必须在登录成功之后再获取，否则为空
-                        LiveInfo liveInfo = DWLive.getInstance().getLiveInfo();
-                        if (liveInfo != null) {
-                            Toast.makeText(mContext, "直播开始时间：" + liveInfo.getLiveStartTime() + "\n"
-                                    + "直播持续时间：" +  liveInfo.getLiveDuration(), Toast.LENGTH_LONG).show();
-                        }
                     }
                 });
             }

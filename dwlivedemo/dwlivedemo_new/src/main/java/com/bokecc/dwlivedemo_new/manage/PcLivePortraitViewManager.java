@@ -109,7 +109,9 @@ public class PcLivePortraitViewManager {
     };
 
     public void init() {
-        mTitle.setText(DWLive.getInstance().getRoomInfo().getName());
+        if (DWLive.getInstance().getRoomInfo() != null) {
+            mTitle.setText(DWLive.getInstance().getRoomInfo().getName());
+        }
         initAnnouncePopup();
         initSourceChangePopup();
     }
@@ -129,10 +131,19 @@ public class PcLivePortraitViewManager {
         }
     };
 
+    // 视频全屏
     @OnClick(R.id.iv_portrait_live_full)
     void showLandscapeLayout(View v) {
         if (mContext instanceof PcLivePlayActivity) {
             ((PcLivePlayActivity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+    }
+
+    // 文档全屏
+    @OnClick(R.id.iv_portrait_doc_full)
+    void showFullDoc(View v) {
+        if (mContext instanceof PcLivePlayActivity) {
+            ((PcLivePlayActivity) mContext).onShowDocFull();
         }
     }
 

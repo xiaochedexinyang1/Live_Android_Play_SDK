@@ -230,6 +230,31 @@ public class QuestionnaireAdapter extends RecyclerView.Adapter<QuestionnaireAdap
         return answerObject.toString();
     }
 
+    /**
+     * 展示正确答案
+     */
+    public void showRight() {
+
+        // 整理选择题的答案
+        if (mOptionViews != null && mOptionViews.size() > 0) {
+            for (int i = 0; i < mOptionViews.size(); i++) {
+                for (int j = 0; j < mOptionViews.valueAt(i).size(); j++) {
+                    mOptionViews.valueAt(i).valueAt(j).disableOptionView();
+                    if (mSubject.get(mOptionViews.keyAt(i)).getOptions().get(j).getCorrect() == 1) {
+                        mOptionViews.valueAt(i).valueAt(j).showTrueFlagView();
+                    }
+                }
+            }
+        }
+
+        // 整理问答题的回答
+        if (mEditViews != null && mEditViews.size() > 0) {
+            for (int i = 0; i < mEditViews.size(); i++) {
+                mEditViews.valueAt(i).disableEditView();
+            }
+        }
+    }
+
     final class QuestionnaireViewHolder extends RecyclerView.ViewHolder {
 
         @BindView(R.id.subject_content)

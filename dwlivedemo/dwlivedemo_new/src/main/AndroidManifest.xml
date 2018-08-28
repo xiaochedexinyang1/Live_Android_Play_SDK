@@ -44,9 +44,7 @@
         android:largeHeap="true"
         android:theme="@style/AppTheme">
 
-        <activity
-            android:name=".SplashActivity"
-            android:screenOrientation="portrait">
+        <activity android:name=".SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

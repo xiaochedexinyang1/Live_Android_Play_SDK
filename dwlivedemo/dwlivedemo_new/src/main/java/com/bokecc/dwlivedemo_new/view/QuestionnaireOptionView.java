@@ -32,6 +32,7 @@ public class QuestionnaireOptionView extends LinearLayout implements CompoundBut
     private TextView mOptionContent;
     private RadioButton mOptionRadio;
     private CheckBox mOptionCheckbox;
+    private TextView mTrueFlagView;  // 正确标识（问卷展示专用）
 
     public QuestionnaireOptionView(Context context) {
         super(context);
@@ -51,6 +52,7 @@ public class QuestionnaireOptionView extends LinearLayout implements CompoundBut
         mOptionContent = (TextView) findViewById(R.id.option_content);
         mOptionRadio = (RadioButton) findViewById(R.id.option_radio);
         mOptionCheckbox = (CheckBox) findViewById(R.id.option_checkbox);
+        mTrueFlagView = (TextView) findViewById(R.id.true_flag);
     }
 
     public void setOption(CheckedChangeListener listener, QuestionnaireInfo.Option option, boolean isRadio, final int position, final int optionIndex) {
@@ -96,6 +98,27 @@ public class QuestionnaireOptionView extends LinearLayout implements CompoundBut
                 }
             }
         });
+    }
+
+    /**
+     * 展示'正确'的标识
+     */
+    public void showTrueFlagView() {
+        if (mTrueFlagView != null) {
+            mTrueFlagView.setVisibility(VISIBLE);
+        }
+    }
+
+    /**
+     * 禁用选项的按钮
+     */
+    public void disableOptionView() {
+        if (mOptionRadio != null) {
+            mOptionRadio.setEnabled(false);
+        }
+        if (mOptionCheckbox != null) {
+            mOptionCheckbox.setEnabled(false);
+        }
     }
 
     public void setCheckedStatus(boolean isChecked) {
