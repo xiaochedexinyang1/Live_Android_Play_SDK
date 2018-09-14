@@ -135,7 +135,7 @@ public class LiveFloatingView {
         newX = newX < 0 ? 0 : newX;
         newY = (newY + stateBarHeight) < 0 ? (0 - stateBarHeight) : newY;
         newX = (newX + liveWidth) > currentDisplay.getWidth() ? (currentDisplay.getWidth() - liveWidth) : newX;
-        newY = (newY + liveHeight) > (currentDisplay.getHeight() - stateBarHeight) ? (currentDisplay.getHeight() - stateBarHeight - liveHeight) : newY;
+        newY = (newY + liveHeight) > (currentDisplay.getHeight() - stateBarHeight) ? (currentDisplay.getHeight() - liveHeight) : newY;
         wmParams.x = newX;
         wmParams.y = newY;
         windowManager.updateViewLayout(mContainer, wmParams);

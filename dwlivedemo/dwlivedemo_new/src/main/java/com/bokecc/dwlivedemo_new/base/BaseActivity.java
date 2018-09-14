@@ -15,9 +15,8 @@ import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
 /**
- * 作者 ${郭鹏飞}.<br/>
+ * Activity基类
  */
-
 public abstract class BaseActivity extends AppCompatActivity implements BaseContract.View {
 
     private Unbinder mUnbinder;
@@ -25,16 +24,12 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseCont
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // TODO: 2016/12/13
-//        if (DWApplication.mAppStatus == -1) { // 如果被强杀不执行初始化操作
-//        } else {
-            beforeSetContentView();
-            setContentView(getLayoutId());
-            mUnbinder = ButterKnife.bind(this);
-            onBindPresenter();
-            onViewCreated();
-//        }
 
+        beforeSetContentView();
+        setContentView(getLayoutId());
+        mUnbinder = ButterKnife.bind(this);
+        onBindPresenter();
+        onViewCreated();
     }
 
     @Override

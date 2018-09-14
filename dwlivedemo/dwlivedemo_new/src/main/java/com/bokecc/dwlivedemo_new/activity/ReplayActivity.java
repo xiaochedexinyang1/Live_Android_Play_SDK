@@ -12,12 +12,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -26,8 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -35,9 +29,10 @@ import android.widget.RelativeLayout;
 
 import com.bokecc.dwlivedemo_new.DWApplication;
 import com.bokecc.dwlivedemo_new.R;
-import com.bokecc.dwlivedemo_new.adapter.LivePublicChatAdapter;
-import com.bokecc.dwlivedemo_new.adapter.LiveQaAdapter;
 import com.bokecc.dwlivedemo_new.base.BaseActivity;
+import com.bokecc.dwlivedemo_new.controller.replay.ChatLayoutController;
+import com.bokecc.dwlivedemo_new.controller.replay.DocLayoutController;
+import com.bokecc.dwlivedemo_new.controller.replay.QaLayoutController;
 import com.bokecc.dwlivedemo_new.global.QaInfo;
 import com.bokecc.dwlivedemo_new.manage.ReplayPlayerManager;
 import com.bokecc.dwlivedemo_new.module.ChatEntity;
@@ -65,15 +60,12 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 /**
- * 直播在线回放页面
- * <p></p>
- * Created by liufh on 2016/12/8.
+ * CC 在线回放 页面
  */
 public class ReplayActivity extends BaseActivity implements TextureView.SurfaceTextureListener,
         IMediaPlayer.OnPreparedListener,
@@ -142,9 +134,6 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         boolean isLayoutShown = replayPlayerManager.OnPlayClick();
     }
 
-    // 退出界面弹出框
-    private CommonPopup mExitPopup;
-
     private View mRoot;
     private IjkMediaPlayer player;
     private DWLiveReplay dwLiveReplay = DWLiveReplay.getInstance();
@@ -181,19 +170,105 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
     }
 
-    /** 初始化 关闭回放界面 弹出框 */
-    private void initClosePopup() {
-        mExitPopup = new CommonPopup(this);
-        mExitPopup.setOutsideCancel(true);
-        mExitPopup.setKeyBackCancel(true);
-        mExitPopup.setTip("您确认结束观看吗?");
-        mExitPopup.setOKClickListener(new CommonPopup.OnOKClickListener() {
-            @Override
-            public void onClick() {
-                finish();
-            }
-        });
+
+    //-------------------------- CC SDK 回放视频 生命周期相关 Start -------------------------------
+
+    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
+    boolean isOnResumeStart = false;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
+        if (inDocFullMode) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
+        isOnResumeStart = false;
+        if (surface != null) {
+            dwLiveReplay.start(surface);
+            isOnResumeStart = true;
+        }
     }
+
+
+    boolean isOnPause = false;
+
+    long currentPosition;
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isPrepared = false;
+        isOnPause = true;
+        if (player != null) {
+            player.pause();
+            if (player.getCurrentPosition() != 0) {
+                currentPosition = player.getCurrentPosition();
+            }
+        }
+
+        if (qaLayoutController != null) {
+            qaLayoutController.clearQaInfo();
+        }
+
+        dwLiveReplay.stop();
+        stopTimerTask();
+        stopNetworkTimer();
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        replayPlayerManager.onDestroy();
+
+        if (timerTask != null) {
+            timerTask.cancel();
+        }
+
+        if (player != null) {
+            player.pause();
+            player.stop();
+            player.release();
+        }
+
+        dwLiveReplay.onDestroy();
+
+        super.onDestroy();
+    }
+
+    Surface surface;
+
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
+        surface = new Surface(surfaceTexture);
+        if (isOnResumeStart) {
+            return;
+        }
+        dwLiveReplay.start(surface);
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
+
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+        surface = null;
+        return false;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
+
+    }
+
+
+    //-------------------------- CC SDK 回放视频 生命周期相关 END -------------------------------
+
+
+    //-------------------------- CC SDK 回放视频 播放器相关 Start -----------------------------
 
     /** 初始化播放器 */
     private void initPlayer() {
@@ -213,6 +288,149 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
         dwLiveReplay.setReplayParams(myDWLiveReplayListener, this, player, docView);
     }
+
+    boolean isPrepared = false;
+
+    @Override
+    public void onPrepared(IMediaPlayer iMediaPlayer) {
+        isPrepared = true;
+        player.start();
+
+        if (currentPosition > 0) {
+            player.seekTo(currentPosition);
+        }
+
+        pcPortraitProgressBar.setVisibility(View.GONE);
+        playerControlLayout.setVisibility(View.VISIBLE);
+
+        if (isPortrait()) {
+            setPortraitLayoutVisibility(View.VISIBLE);
+        } else {
+            setPortraitLayoutVisibility(View.GONE);
+        }
+
+        if (replayPlayerManager != null) {
+            replayPlayerManager.onPrepared();
+            replayPlayerManager.setDurationTextView(player.getDuration());
+        }
+
+        // 更新一下当前播放的按钮的状态
+        replayPlayerManager.changePlayIconStatus(player.isPlaying());
+
+        startTimerTask();
+
+        isNetworkConnected = true;
+        startNetworkTimer();
+
+    }
+
+    Runnable r;
+    Handler handler = new Handler(Looper.getMainLooper());
+    @Override
+    public boolean onInfo(IMediaPlayer iMediaPlayer, int arg1, int i1) {
+
+        if (arg1 == IMediaPlayer.MEDIA_INFO_BUFFERING_START) { // 开始缓冲
+            r = new Runnable() {
+                @Override
+                public void run() {
+                    if (qaLayoutController != null) {
+                        qaLayoutController.clearQaInfo();
+                    }
+                    dwLiveReplay.stop();
+                    dwLiveReplay.start(surface);
+                }
+            };
+
+            handler.postDelayed(r, 10 * 1000); // 延时定时器，此处设置的是10s，可自行设置
+        } else if(arg1 == IMediaPlayer.MEDIA_INFO_BUFFERING_END) {
+            if (r != null) {
+                handler.removeCallbacks(r); // 如果收到了缓冲结束，那么取消延时定时器
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sar_num, int sar_den) {
+
+        if (width == 0 || height == 0) {
+            return;
+        }
+        mPlayerContainer.setLayoutParams(getVideoSizeParams());
+    }
+
+    // 视频等比缩放
+    private RelativeLayout.LayoutParams getVideoSizeParams() {
+
+        int width = wm.getDefaultDisplay().getWidth();
+        int height = wm.getDefaultDisplay().getHeight();
+
+        int vWidth = player.getVideoWidth();
+        int vHeight = player.getVideoHeight();
+
+        if(isPortrait()) {
+            height = height / 3; //TODO 根据当前布局更改
+        }
+
+        if (vWidth == 0) {
+            vWidth = 600;
+        }
+        if (vHeight == 0) {
+            vHeight = 400;
+        }
+
+        if (vWidth > width || vHeight > height) {
+            float wRatio = (float) vWidth / (float) width;
+            float hRatio = (float) vHeight / (float) height;
+            float ratio = Math.max(wRatio, hRatio);
+
+            width = (int) Math.ceil((float) vWidth / ratio);
+            height = (int) Math.ceil((float) vHeight / ratio);
+        } else {
+            float wRatio = (float) width / (float) vWidth;
+            float hRatio = (float) height / (float) vHeight;
+            float ratio = Math.min(wRatio, hRatio);
+
+            width = (int) Math.ceil((float) vWidth * ratio);
+            height = (int) Math.ceil((float) vHeight * ratio);
+        }
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        return params;
+    }
+
+
+    boolean isComplete = false;
+
+    /** 播放结束，会回调此方法 */
+    @Override
+    public void onCompletion(IMediaPlayer iMediaPlayer) {
+        isComplete = true;
+    }
+
+    /** 设置播放跳转的的位置 */
+    public void setSeekPosition(int position) {
+        player.seekTo(position);
+        if (isComplete) {
+            player.start();
+            isComplete = false;
+            replayPlayerManager.setPlayingStatusIcon();
+        }
+    }
+
+    /** 设置播放状态（由界面控件调用）*/
+    public void setPlayerStatus(boolean isPlaying) {
+        if (isPlaying) {
+            player.start();
+        } else {
+            player.pause();
+        }
+    }
+
+    //-------------------------- CC SDK 回放视频 播放器相关 END -----------------------------
+
 
     private ArrayList<ChatEntity> mChatEntities;
     private LinkedHashMap<String, QaInfo> mQaInfoMap;
@@ -368,130 +586,8 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         }
     };
 
-    @Override
-    protected void onDestroy() {
-        replayPlayerManager.onDestroy();
 
-        if (timerTask != null) {
-            timerTask.cancel();
-        }
-
-        if (player != null) {
-            player.pause();
-            player.stop();
-            player.release();
-        }
-
-        dwLiveReplay.onDestroy();
-
-        super.onDestroy();
-    }
-
-
-    boolean isOnPause = false;
-
-    long currentPosition;
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        isPrepared = false;
-        isOnPause = true;
-        if (player != null) {
-            player.pause();
-            if (player.getCurrentPosition() != 0) {
-                currentPosition = player.getCurrentPosition();
-            }
-        }
-
-        if (qaLayoutController != null) {
-            qaLayoutController.clearQaInfo();
-        }
-
-        dwLiveReplay.stop();
-        stopTimerTask();
-        stopNetworkTimer();
-    }
-
-    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
-    boolean isOnResumeStart = false;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
-        if (inDocFullMode) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
-
-        isOnResumeStart = false;
-        if (surface != null) {
-            dwLiveReplay.start(surface);
-            isOnResumeStart = true;
-        }
-    }
-
-    Surface surface;
-
-    @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
-        surface = new Surface(surfaceTexture);
-        if (isOnResumeStart) {
-            return;
-        }
-        dwLiveReplay.start(surface);
-    }
-
-    @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
-
-    }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-        surface = null;
-        return false;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-
-    }
-
-    boolean isPrepared = false;
-
-    @Override
-    public void onPrepared(IMediaPlayer iMediaPlayer) {
-        isPrepared = true;
-        player.start();
-
-        if (currentPosition > 0) {
-            player.seekTo(currentPosition);
-        }
-
-        pcPortraitProgressBar.setVisibility(View.GONE);
-        playerControlLayout.setVisibility(View.VISIBLE);
-
-        if (isPortrait()) {
-            setPortraitLayoutVisibility(View.VISIBLE);
-        } else {
-            setPortraitLayoutVisibility(View.GONE);
-        }
-
-        if (replayPlayerManager != null) {
-            replayPlayerManager.onPrepared();
-            replayPlayerManager.setDurationTextView(player.getDuration());
-        }
-
-        // 更新一下当前播放的按钮的状态
-        replayPlayerManager.changePlayIconStatus(player.isPlaying());
-
-        startTimerTask();
-
-        isNetworkConnected = true;
-        startNetworkTimer();
-
-    }
+    // --------------------- Demo 随时间展示聊天、问答任务  --------------------
 
     Timer timer = new Timer();
     TimerTask timerTask;
@@ -554,9 +650,7 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
                 }
             }
         };
-
         timer.schedule(timerTask, 0, 1 * 1000);
-
     }
 
     private void stopTimerTask() {
@@ -565,7 +659,15 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         }
     }
 
+
+    // --------------------- Demo 网络监测时间任务  --------------------
+
     boolean isNetworkConnected;
+
+    private Timer timerNetwork = new Timer();
+
+    private TimerTask timerTaskNetwork;
+
     private void startNetworkTimer() {
 
         if (timerTaskNetwork != null) {
@@ -576,9 +678,7 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
             @Override
             public void run() {
-
                 if (isNetworkConnected()) {
-
                     if (isNetworkConnected) {
                         return;
                     } else {
@@ -591,15 +691,12 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
                     }
                     isNetworkConnected = true;
-
                 } else {
-                    if (isNetworkConnected) {
-                    } else {
+                    if (!isNetworkConnected) {
                         return;
                     }
                     isNetworkConnected = false;
                 }
-
             }
         };
 
@@ -612,103 +709,7 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         }
     }
 
-
-    private Timer timerNetwork = new Timer();
-
-    private TimerTask timerTaskNetwork;
-
-    /**
-     * 检测网络是否可用
-     */
-    public boolean isNetworkConnected() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo ni = cm.getActiveNetworkInfo();
-        return ni != null && ni.isAvailable();
-    }
-
-    private void setPortraitLayoutVisibility(int i) {
-        rlLiveInfosLayout.setVisibility(i);
-    }
-
-    private void setLandScapeVisibility(int i) {
-        playerControlLayout.setVisibility(i);
-        rlLiveInfosLayout.setVisibility(i);
-    }
-
-    @Override
-    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sar_num, int sar_den) {
-
-        if (width == 0 || height == 0) {
-            return;
-        }
-        mPlayerContainer.setLayoutParams(getVideoSizeParams());
-    }
-
-    // 视频等比缩放
-    private RelativeLayout.LayoutParams getVideoSizeParams() {
-
-        int width = wm.getDefaultDisplay().getWidth();
-        int height = wm.getDefaultDisplay().getHeight();
-
-        int vWidth = player.getVideoWidth();
-        int vHeight = player.getVideoHeight();
-
-        if(isPortrait()) {
-            height = height / 3; //TODO 根据当前布局更改
-        }
-
-        if (vWidth == 0) {
-            vWidth = 600;
-        }
-        if (vHeight == 0) {
-            vHeight = 400;
-        }
-
-        if (vWidth > width || vHeight > height) {
-            float wRatio = (float) vWidth / (float) width;
-            float hRatio = (float) vHeight / (float) height;
-            float ratio = Math.max(wRatio, hRatio);
-
-            width = (int) Math.ceil((float) vWidth / ratio);
-            height = (int) Math.ceil((float) vHeight / ratio);
-        } else {
-            float wRatio = (float) width / (float) vWidth;
-            float hRatio = (float) height / (float) vHeight;
-            float ratio = Math.min(wRatio, hRatio);
-
-            width = (int) Math.ceil((float) vWidth * ratio);
-            height = (int) Math.ceil((float) vHeight * ratio);
-        }
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
-        params.addRule(RelativeLayout.CENTER_IN_PARENT);
-        return params;
-    }
-
-    public boolean isPortrait() {
-        int mOrientation = getApplicationContext().getResources().getConfiguration().orientation;
-        if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (!isPortrait()) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            return;
-        } else {
-            if (chatLayoutController != null && chatLayoutController.onBackPressed()) {
-                return;
-            }
-        }
-
-        mExitPopup.show(mRoot);
-    }
-
-    //------------------------下方布局------------------------
+    // --------------------- Demo 视频下方布局 文档、问答、聊天布局 Start --------------------
 
     @BindView(R.id.rg_infos_tag)
     RadioGroup tagRadioGroup;
@@ -737,7 +738,7 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     ChatLayoutController chatLayoutController;
     QaLayoutController qaLayoutController;
 
-    private String viewVisibleTag = "1";
+    private final static String VIEW_VISIBLE_TAG = "1";
 
     private boolean toDocFullMode;  // 是否要进入文档全屏模式
     private boolean inDocFullMode;  // 当前是否在文档全屏模式
@@ -748,23 +749,12 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
     private final static int DOUBLE_TAP_TIMEOUT = 200;
     private MotionEvent mPreviousUpEvent;
 
-    /**
-     * 检测是否是双击
-     */
-    private boolean isConsideredDoubleTap(MotionEvent firstUp, MotionEvent secondDown){
-        if (secondDown.getEventTime() - firstUp.getEventTime() > DOUBLE_TAP_TIMEOUT) {
-            return false;
-        }
-        int deltaX =(int) firstUp.getX() - (int)secondDown.getX();
-        int deltaY =(int) firstUp.getY()- (int)secondDown.getY();
-        return deltaX * deltaX + deltaY * deltaY < 10000;
-    }
-
+    // 初始化下方布局的ViewPager
     private void initViewPager() {
 
         LayoutInflater inflater = LayoutInflater.from(this);
 
-        if (viewVisibleTag.equals(dwLiveReplay.getTemplateInfo().getPdfView())) {
+        if (VIEW_VISIBLE_TAG.equals(dwLiveReplay.getTemplateInfo().getPdfView())) {
             initDocLayout(inflater);
             docView = docLayoutController.getDocView();
             docView.setClickable(true); // 设置文档区域可点击
@@ -796,11 +786,11 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
         }
 
-        if (viewVisibleTag.equals(dwLiveReplay.getTemplateInfo().getChatView())) {
+        if (VIEW_VISIBLE_TAG.equals(dwLiveReplay.getTemplateInfo().getChatView())) {
             initChatLayout(inflater);
         }
 
-        if (viewVisibleTag.equals(dwLiveReplay.getTemplateInfo().getQaView())) {
+        if (VIEW_VISIBLE_TAG.equals(dwLiveReplay.getTemplateInfo().getQaView())) {
             initQaLayout(inflater);
         }
 
@@ -864,6 +854,7 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
     }
 
+    // 初始化文档布局区域
     private void initDocLayout(LayoutInflater inflater) {
         tagIdList.add(R.id.live_portrait_info_document);
         tagRBList.add(docTag);
@@ -874,6 +865,7 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         docLayoutController = new DocLayoutController(this, docLayout);
     }
 
+    // 初始化聊天布局区域
     private void initChatLayout(LayoutInflater inflater) {
         tagIdList.add(R.id.live_portrait_info_chat);
         tagRBList.add(chatTag);
@@ -883,9 +875,9 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
 
         chatLayoutController = new ChatLayoutController(this, chatLayout);
         chatLayoutController.initChat();
-
     }
 
+    // 初始化问答布局区域
     private void initQaLayout(LayoutInflater inflater) {
         tagIdList.add(R.id.live_portrait_info_qa);
         tagRBList.add(qaTag);
@@ -897,161 +889,72 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         qaLayoutController.initQaLayout();
     }
 
+    // --------------------- Demo 视频下方布局 文档、问答、聊天 END --------------------
 
-    boolean isComplete = false;
+    //-------------------------- Demo 退出回放观看页逻辑 --------------------------
+
+    // 退出界面弹出框
+    private CommonPopup mExitPopup;
+
+    /** 初始化 关闭回放界面 弹出框 */
+    private void initClosePopup() {
+        mExitPopup = new CommonPopup(this);
+        mExitPopup.setOutsideCancel(true);
+        mExitPopup.setKeyBackCancel(true);
+        mExitPopup.setTip("您确认结束观看吗?");
+        mExitPopup.setOKClickListener(new CommonPopup.OnOKClickListener() {
+            @Override
+            public void onClick() {
+                finish();
+            }
+        });
+    }
+
+    // Back 键相关逻辑处理
     @Override
-    public void onCompletion(IMediaPlayer iMediaPlayer) {
-        isComplete = true;
+    public void onBackPressed() {
+        if (!isPortrait()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            return;
+        } else {
+            if (chatLayoutController != null && chatLayoutController.onBackPressed()) {
+                return;
+            }
+        }
+
+        mExitPopup.show(mRoot);
     }
 
+    //-------------------------- Demo 回放观看页 工具方法 -------------------------------
 
-    //----------------------文档----------------------------
-    public class DocLayoutController {
-
-        @BindView(R.id.live_doc)
-        DocView mDocView;
-
-        Context mContext;
-
-        public DocLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
+    // 判断当前屏幕朝向是否为竖屏
+    public boolean isPortrait() {
+        int mOrientation = getApplicationContext().getResources().getConfiguration().orientation;
+        if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            return false;
+        } else {
+            return true;
         }
-
-        public DocView getDocView() {
-            return mDocView;
-        }
-
     }
 
-    //----------------------聊天-----------------------------
-    public class ChatLayoutController {
+    // 检测网络是否可用
+    public boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm.getActiveNetworkInfo();
+        return ni != null && ni.isAvailable();
+    }
 
-        //TODO 多个pager切换的隐藏操作需要实现
-
-        @BindView(R.id.chat_container)
-        RecyclerView mChatList;
-
-        @BindView(R.id.iv_live_pc_private_chat)
-        ImageView mPrivateChatIcon;
-
-        @BindView(R.id.id_private_chat_user_layout)
-        LinearLayout mPrivateChatUserLayout;
-
-        @BindView(R.id.id_push_chat_layout)
-        RelativeLayout mChatLayout;
-
-        int mChatInfoLength;
-
-        Context mContext;
-
-        public ChatLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
-            mChatInfoLength = 0;
-            mChatLayout.setVisibility(View.GONE);
-            mPrivateChatIcon.setVisibility(View.GONE);
-        }
-
-        LivePublicChatAdapter mChatAdapter;
-
-        public void initChat() {
-            mChatList.setLayoutManager(new LinearLayoutManager(mContext));
-            mChatAdapter = new LivePublicChatAdapter(mContext);
-            mChatList.setAdapter(mChatAdapter);
-        }
-
-
-        public boolean onBackPressed() {
+    // 检测是否是双击事件
+    private boolean isConsideredDoubleTap(MotionEvent firstUp, MotionEvent secondDown){
+        if (secondDown.getEventTime() - firstUp.getEventTime() > DOUBLE_TAP_TIMEOUT) {
             return false;
         }
-
-        /**
-         * 回放的聊天添加
-         * @param chatEntities
-         */
-        public void addChatEntities(ArrayList<ChatEntity> chatEntities) {
-            // 回放的聊天内容随时间轴推进展示
-            if (DWApplication.REPLAY_CHAT_FOLLOW_TIME) {
-                // 如果数据长度没发生变化就不刷新
-                if (mChatInfoLength != chatEntities.size()) {
-                    mChatAdapter.add(chatEntities);
-                    mChatList.scrollToPosition(chatEntities.size() - 1);
-                    mChatInfoLength = chatEntities.size();
-                }
-            } else {
-                mChatAdapter.add(chatEntities);
-            }
-        }
+        int deltaX =(int) firstUp.getX() - (int)secondDown.getX();
+        int deltaY =(int) firstUp.getY()- (int)secondDown.getY();
+        return deltaX * deltaX + deltaY * deltaY < 10000;
     }
 
-    //----------------------问答----------------------------
-    public class QaLayoutController {
-
-        @BindView(R.id.rv_qa_container)
-        RecyclerView mQaList;
-
-        @BindView(R.id.rl_qa_input_layout)
-        RelativeLayout mInputLayout;
-
-        LiveQaAdapter mQaAdapter;
-
-        int mQaInfoLength;
-
-        Context mContext;
-
-        public QaLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
-            mQaInfoLength = 0;
-            mInputLayout.setVisibility(View.GONE);
-        }
-
-        public void initQaLayout() {
-            mQaList.setLayoutManager(new LinearLayoutManager(mContext));
-            mQaAdapter = new LiveQaAdapter(mContext);
-            mQaList.setAdapter(mQaAdapter);
-            //TODO 增加分割线
-            DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(ReplayActivity.this, DividerItemDecoration.VERTICAL);
-        }
-
-        public void clearQaInfo() {
-            mQaAdapter.resetQaInfos();
-        }
-
-        public void addReplayQAInfos(LinkedHashMap<String, QaInfo> replayQaInfos) {
-            // 回放的问答内容随时间轴推进展示
-            if (DWApplication.REPLAY_QA_FOLLOW_TIME) {
-                // 如果数据长度没发生变化就不刷新
-                if (mQaInfoLength != replayQaInfos.size()) {
-                    mQaAdapter.addReplayQuestoinAnswer(replayQaInfos);
-                    mQaList.scrollToPosition(replayQaInfos.size() - 1);
-                    mQaInfoLength = replayQaInfos.size();
-                }
-            } else {
-                mQaAdapter.addReplayQuestoinAnswer(replayQaInfos);
-            }
-        }
-
-        public void addQuestion(Question question) {
-            mQaAdapter.addQuestion(question);
-            //TODO 跳转到那个地方
-        }
-
-        public void addAnswer(Answer answer) {
-            mQaAdapter.addAnswer(answer);
-        }
-
-    }
-
-    public void setPlayerStatus(boolean isPlaying) {
-        if (isPlaying) {
-            player.start();
-        } else {
-            player.pause();
-        }
-    }
-
+    // 设置屏幕朝向 -- 视频全屏功能调用
     public void setScreenStatus(boolean isFull) {
         if (isFull) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -1060,40 +963,9 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         }
     }
 
-    public void setSeekPosition(int position) {
-        player.seekTo(position);
-
-        if (isComplete) {
-            player.start();
-            isComplete = false;
-            replayPlayerManager.setPlayingStatusIcon();
-        }
+    // 设置竖屏布局内容是否展示
+    private void setPortraitLayoutVisibility(int i) {
+        rlLiveInfosLayout.setVisibility(i);
     }
 
-    Runnable r;
-    Handler handler = new Handler(Looper.getMainLooper());
-    @Override
-    public boolean onInfo(IMediaPlayer iMediaPlayer, int arg1, int i1) {
-
-        if (arg1 == IMediaPlayer.MEDIA_INFO_BUFFERING_START) { // 开始缓冲
-            r = new Runnable() {
-                @Override
-                public void run() {
-                    if (qaLayoutController != null) {
-                        qaLayoutController.clearQaInfo();
-                    }
-                    dwLiveReplay.stop();
-                    dwLiveReplay.start(surface);
-                }
-            };
-
-            handler.postDelayed(r, 10 * 1000); // 延时定时器，此处设置的是10s，可自行设置
-        } else if(arg1 == IMediaPlayer.MEDIA_INFO_BUFFERING_END) {
-            if (r != null) {
-                handler.removeCallbacks(r); // 如果收到了缓冲结束，那么取消延时定时器
-            }
-        }
-
-        return false;
-    }
 }

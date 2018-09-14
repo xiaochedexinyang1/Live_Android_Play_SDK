@@ -12,14 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -28,14 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.EditText;
-import android.widget.FrameLayout;
-import android.widget.GridView;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
@@ -47,17 +33,15 @@ import android.widget.Toast;
 
 import com.bokecc.dwlivedemo_new.DWApplication;
 import com.bokecc.dwlivedemo_new.R;
-import com.bokecc.dwlivedemo_new.adapter.EmojiAdapter;
-import com.bokecc.dwlivedemo_new.adapter.LivePublicChatAdapter;
-import com.bokecc.dwlivedemo_new.adapter.LiveQaAdapter;
-import com.bokecc.dwlivedemo_new.adapter.PrivateChatAdapter;
-import com.bokecc.dwlivedemo_new.adapter.PrivateUserAdapter;
 import com.bokecc.dwlivedemo_new.base.BaseActivity;
+import com.bokecc.dwlivedemo_new.controller.live.ChatLayoutController;
+import com.bokecc.dwlivedemo_new.controller.live.DocLayoutController;
+import com.bokecc.dwlivedemo_new.controller.live.IntroLayoutController;
+import com.bokecc.dwlivedemo_new.controller.live.QaLayoutController;
 import com.bokecc.dwlivedemo_new.manage.AppRTCAudioManager;
 import com.bokecc.dwlivedemo_new.manage.PcLiveLandscapeViewManager;
 import com.bokecc.dwlivedemo_new.manage.PcLivePortraitViewManager;
 import com.bokecc.dwlivedemo_new.module.ChatEntity;
-import com.bokecc.dwlivedemo_new.module.PrivateUser;
 import com.bokecc.dwlivedemo_new.popup.CommonPopup;
 import com.bokecc.dwlivedemo_new.popup.ExeternalQuestionnairePopup;
 import com.bokecc.dwlivedemo_new.popup.LotteryPopup;
@@ -68,13 +52,9 @@ import com.bokecc.dwlivedemo_new.popup.QuestionnaireStopPopup;
 import com.bokecc.dwlivedemo_new.popup.RollCallPopup;
 import com.bokecc.dwlivedemo_new.popup.RtcPopup;
 import com.bokecc.dwlivedemo_new.popup.VotePopup;
-import com.bokecc.dwlivedemo_new.recycle.BaseOnItemTouch;
-import com.bokecc.dwlivedemo_new.recycle.OnClickListener;
-import com.bokecc.dwlivedemo_new.util.EmojiUtil;
 import com.bokecc.dwlivedemo_new.util.SoftKeyBoardState;
 import com.bokecc.dwlivedemo_new.view.BarrageLayout;
 import com.bokecc.dwlivedemo_new.view.LiveFloatingView;
-import com.bokecc.dwlivedemo_new.view.MixedTextView;
 import com.bokecc.sdk.mobile.live.DWLive;
 import com.bokecc.sdk.mobile.live.DWLiveListener;
 import com.bokecc.sdk.mobile.live.DWLivePlayer;
@@ -87,11 +67,10 @@ import com.bokecc.sdk.mobile.live.pojo.QualityInfo;
 import com.bokecc.sdk.mobile.live.pojo.Question;
 import com.bokecc.sdk.mobile.live.pojo.QuestionnaireInfo;
 import com.bokecc.sdk.mobile.live.pojo.QuestionnaireStatisInfo;
+import com.bokecc.sdk.mobile.live.pojo.TemplateInfo;
 import com.bokecc.sdk.mobile.live.rtc.RtcClient;
 import com.bokecc.sdk.mobile.live.widget.DocView;
-import com.bokecc.sdk.mobile.push.chat.model.ChatUser;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
@@ -105,13 +84,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 
 /**
- * 直播界面
- * Created by liufh on 2016/12/8.
+ * CC 直播观看 界面
  */
 public class PcLivePlayActivity extends BaseActivity implements TextureView.SurfaceTextureListener,
         IMediaPlayer.OnPreparedListener,
@@ -224,28 +201,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     }
 
 
-    public void setRlSoundLayout(int i) {
-        rlSoundLayout.setVisibility(i);
-    }
-
-    @OnClick(R.id.rl_pc_live_top_layout)
-    void onPlayOnClick(View v) {
-        if (isPortrait()) {
-            pcLivePortraitViewManager.onPlayClick();
-        } else {
-            pcLiveLandscapeViewManager.OnPlayClick();
-        }
-    }
-
-    private CommonPopup mExitPopup; // 退出界面弹出框
-    private LotteryStartPopup mLotteryStartPopup; // 开始抽奖弹出框
-    private LotteryPopup mLotteryPopup;  // 抽奖结果弹出框
-    private RollCallPopup mRollcallPopup;
-    private VotePopup mVotePopup;
-    private QuestionnairePopup mQuestionnairePopup;  // 问卷弹出界面
-    private QuestionnaireStopPopup mQuestionnaireStopPopup; // 问卷结束弹出界面
-    private ExeternalQuestionnairePopup mExeternalQuestionnairePopup; // 第三方问卷弹出界面
-    private QuestionnaireStatisPopup mQuestionnaireStatisPopup; // 问卷统计界面
 
     private View mRoot;
     private DWLivePlayer player;
@@ -260,8 +215,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         return R.layout.activity_pc_live;
     }
 
-    PcLivePortraitViewManager pcLivePortraitViewManager;
-    PcLiveLandscapeViewManager pcLiveLandscapeViewManager;
+
     RtcPopup rtcPopup;
 
     @Override
@@ -280,14 +234,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
 
         onSoftInputChange();
 
-        rtcPopup = new RtcPopup(this);
-
-        pcLiveLandscapeViewManager = new PcLiveLandscapeViewManager(this, rlLandscapeLayout, mRoot, livingSign, rtcPopup, mImm);
-        pcLiveLandscapeViewManager.init();
-
-        pcLivePortraitViewManager = new PcLivePortraitViewManager(this, rlLiveTopLayout, mRoot, livingSign, rtcPopup, mImm);
-        pcLivePortraitViewManager.init();
-
         initClosePopup();
 
         initLotteryPopup();
@@ -298,83 +244,141 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
 
         initQuestionnairePopup();
 
-        initQuestionnaireStopPopup();
-
-        initQuestionnaireStatis();
-
+        // 1 先定义View
         initViewPager();
 
+        // 2 创建播放器然后设置相关参数
         initPlayer();
+
+        // 3 初始化界面管理
+        initPcLiveViewManager();
 
         blPcBarrage.start();
     }
 
-    private InputMethodManager mImm;
+    //-------------------------- CC SDK 直播视频 生命周期相关 Start -------------------------------
 
-    // 软键盘监听
-    private SoftKeyBoardState mSoftKeyBoardState;
+    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
+    boolean isOnResumeStart = false;
 
-    private void onSoftInputChange() {
-        mImm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        mSoftKeyBoardState = new SoftKeyBoardState(mRoot, false);
-        mSoftKeyBoardState.setOnSoftKeyBoardStateChangeListener(new SoftKeyBoardState.OnSoftKeyBoardStateChangeListener() {
-            @Override
-            public void onChange(boolean isShow) {
-                pcLiveLandscapeViewManager.onSoftKeyChange(isShow);
-            }
-        });
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
+        if (inDocFullMode) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
+        isOnResumeStart = false;
+        if (surface != null) {
+            dwLive.start(surface);
+            isOnResumeStart = true;
+        }
     }
 
-    private void initClosePopup() {
-        mExitPopup = new CommonPopup(this);
-        mExitPopup.setOutsideCancel(true);
-        mExitPopup.setKeyBackCancel(true);
-        mExitPopup.setTip("您确认结束观看吗?");
-        mExitPopup.setOKClickListener(new CommonPopup.OnOKClickListener() {
-            @Override
-            public void onClick() {
-                finish();
-            }
-        });
+    boolean isOnPause = false;
+
+    @Override
+    protected void onPause() {
+
+        isPrepared = false;
+        isOnPause = true;
+
+        // 如果当前存在悬浮窗，就退出悬浮窗
+        if (floatingView != null) {
+            floatingView.removeView();
+            pc_live_main.addView(rlLiveTopLayout, 0);
+            rlLiveTopLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            floatingView.quit();
+            floatingView = null;
+        }
+
+        if (player != null && player.isPlaying()) {
+            player.pause();
+        }
+
+        hideSpeak();
+
+        if (qaLayoutController != null) {
+            qaLayoutController.clearQaInfo();
+        }
+
+
+        pcLiveLandscapeViewManager.onPause();
+
+        dwLive.stop();
+
+        mRollcallPopup.dismissImmediate();
+
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        pcLiveLandscapeViewManager.onDestroy();
+
+        handler.removeCallbacks(dismissLottery);
+
+        if (qaLayoutController != null) {
+            qaLayoutController.removeTipsHideCallBack();
+        }
+
+        if (mRollcallPopup != null) {
+            mRollcallPopup.onDestroy();
+        }
+
+        if (player != null) {
+            player.pause();
+            player.stop();
+            player.release();
+        }
+
+        localRender.release();
+        remoteRender.release();
+
+        if (mSoftKeyBoardState != null) {
+            mSoftKeyBoardState.release();
+        }
+
+        cancel10sTimerTask();
+        stopCmTimer();
+
+        dwLive.onDestroy();
+
+        super.onDestroy();
+    }
+
+    Surface surface;
+
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
+        surface = new Surface(surfaceTexture);
+        if (player.isPlaying()) {
+            player.setSurface(surface);
+        } else {
+            dwLive.start(surface);
+        }
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
 
     }
 
-    private void initLotteryPopup() {
-        mLotteryStartPopup = new LotteryStartPopup(this);
-        mLotteryStartPopup.setKeyBackCancel(true);
-        mLotteryPopup = new LotteryPopup(this);
-        mLotteryPopup.setKeyBackCancel(true);
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
+        surface = null;
+        return false;
     }
 
-    private void initRollcallPopup() {
-        mRollcallPopup = new RollCallPopup(this);
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
+
     }
 
-    private void initVotePopup() {
-        mVotePopup = new VotePopup(this);
-    }
+    //-------------------------- CC SDK 直播视频 生命周期相关 END -----------------------------
 
-    private void initQuestionnairePopup() {
-        mQuestionnairePopup = new QuestionnairePopup(this);
-        mExeternalQuestionnairePopup = new ExeternalQuestionnairePopup(this);
-    }
-
-    private void initQuestionnaireStopPopup() {
-        mQuestionnaireStopPopup = new QuestionnaireStopPopup(this);
-        mQuestionnaireStopPopup.setOnDismissListener(new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                if (mQuestionnairePopup != null) {
-                    mQuestionnairePopup.dismiss();
-                }
-            }
-        });
-    }
-
-    /** 初始化问卷统计弹出界面 */
-    private void initQuestionnaireStatis() {
-        mQuestionnaireStatisPopup = new QuestionnaireStatisPopup(this);
-    }
+    //-------------------------- CC SDK 直播视频 播放器相关 Start -----------------------------
 
     private void initPlayer() {
         mPlayerContainer.setSurfaceTextureListener(this);
@@ -385,8 +389,141 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         initRtc();
     }
 
-    //-----------------------rtc连麦------------------------
+    boolean isPrepared = false;
+
+    @Override
+    public void onPrepared(IMediaPlayer iMediaPlayer) {
+        isPrepared = true;
+        player.start();
+
+        pcPortraitProgressBar.setVisibility(View.GONE);
+        tvPcPortraitStatusTips.setVisibility(View.GONE);
+
+        if (rtcPopup.isShow()) {
+            return;
+        }
+
+        if (isPortrait()) {
+            setPortraitLayoutVisibility(View.VISIBLE);
+        } else {
+            rlLandscapeLayout.setVisibility(View.VISIBLE);
+            pcLiveLandscapeViewManager.setScreenVisible(true, false);
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sar_num, int sar_den) {
+
+        if (width == 0 || height == 0) {
+            return;
+        }
+        mPlayerContainer.setLayoutParams(getVideoSizeParams());
+    }
+
+    // 视频等比缩放
+    private RelativeLayout.LayoutParams getVideoSizeParams() {
+
+        int width = wm.getDefaultDisplay().getWidth();
+        int height= 0;
+        if(isPortrait()) {
+            height = wm.getDefaultDisplay().getHeight() / 3;
+        } else {
+            height = wm.getDefaultDisplay().getHeight();
+        }
+
+
+        int vWidth = player.getVideoWidth();
+        int vHeight = player.getVideoHeight();
+
+        if (vWidth == 0) {
+            vWidth = 600;
+        }
+        if (vHeight == 0) {
+            vHeight = 400;
+        }
+
+        if (vWidth > width || vHeight > height) {
+            float wRatio = (float) vWidth / (float) width;
+            float hRatio = (float) vHeight / (float) height;
+            float ratio = Math.max(wRatio, hRatio);
+
+            width = (int) Math.ceil((float) vWidth / ratio);
+            height = (int) Math.ceil((float) vHeight / ratio);
+        } else {
+            float wRatio = (float) width / (float) vWidth;
+            float hRatio = (float) height / (float) vHeight;
+            float ratio = Math.min(wRatio, hRatio);
+
+            width = (int) Math.ceil((float) vWidth * ratio);
+            height = (int) Math.ceil((float) vHeight * ratio);
+        }
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        return params;
+    }
+
+    private void reloadVideo() {
+        if (player.isPlaying() || !isPrepared) {
+            // 播放到下一个关键帧的时候，声音就会恢复
+            if (DWApplication.RTC_AUDIO) {
+                player.setVolume(1.0f, 1.0f);
+            }
+            return;
+        }
+
+        try {
+            dwLive.restartVideo(surface);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (DWLiveException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //-------------------------- CC SDK 直播视频 播放器相关 END -----------------------------
+
+    // --------------------- 视频播放控制器界面相关逻辑  ---------------------
+
+    PcLivePortraitViewManager pcLivePortraitViewManager;
+    PcLiveLandscapeViewManager pcLiveLandscapeViewManager;
+
+    private void initPcLiveViewManager() {
+        pcLiveLandscapeViewManager = new PcLiveLandscapeViewManager(this, rlLandscapeLayout, mRoot, livingSign, rtcPopup, mImm);
+        pcLiveLandscapeViewManager.init();
+        pcLivePortraitViewManager = new PcLivePortraitViewManager(this, rlLiveTopLayout, mRoot, livingSign, rtcPopup, mImm);
+        pcLivePortraitViewManager.init();
+    }
+
+    @OnClick(R.id.rl_pc_live_top_layout)
+    void onPlayOnClick(View v) {
+        if (isPortrait()) {
+            pcLivePortraitViewManager.onPlayClick();
+        } else {
+            pcLiveLandscapeViewManager.OnPlayClick();
+        }
+    }
+
+    private void showNorRtcIcon() {
+        pcLivePortraitViewManager.showNormalRtcIcon();
+        pcLiveLandscapeViewManager.showNormalRtcIcon();
+    }
+
+    private void setPortraitLayoutVisibility(int i) {
+        rlPortraitLayout.setVisibility(i);
+        rlLiveInfosLayout.setVisibility(i);
+        pcLivePortraitViewManager.setScreenVisible(true, false);
+    }
+
+    public void setRlSoundLayout(int i) {
+        rlSoundLayout.setVisibility(i);
+    }
+
+    //-------------------------- CC SDK 直播视频 连麦相关 Start -----------------------------
+
+    /** 初始化连麦模块 */
     private void initRtc() {
+        rtcPopup = new RtcPopup(this);
         EglBase rootEglBase = EglBase.create();
         localRender.init(rootEglBase.getEglBaseContext(), null);
         remoteRender.init(rootEglBase.getEglBaseContext(), null);
@@ -519,7 +656,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
                     // 由于rtc是走的通话音频，所以需要做处理
                     mAudioManager = AppRTCAudioManager.create(PcLivePlayActivity.this, null);
                     mAudioManager.init();
-                    setPlayControllerVisible(false);
                     isSpeaking = true;
 
                     //设置为视频模式
@@ -575,11 +711,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     };
 
 
-    private void showNorRtcIcon() {
-        pcLivePortraitViewManager.showNormalRtcIcon();
-        pcLiveLandscapeViewManager.showNormalRtcIcon();
-    }
-
     private Timer cmTimer;
     private TimerTask cmTimerTask;
 
@@ -615,14 +746,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         cmTimer.schedule(cmTimerTask, 0, 1000);
     }
 
-    /**
-     * 检测网络是否可用
-     */
-    public boolean isNetworkConnected() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo ni = cm.getActiveNetworkInfo();
-        return ni != null && ni.isAvailable();
-    }
 
     private int cmCount;
 
@@ -686,28 +809,6 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         }
     }
 
-    private void reloadVideo() {
-        if (player.isPlaying() || !isPrepared) {
-            // 播放到下一个关键帧的时候，声音就会恢复
-            if (DWApplication.RTC_AUDIO) {
-                player.setVolume(1.0f, 1.0f);
-            }
-            return;
-        }
-
-        try {
-            dwLive.restartVideo(surface);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (DWLiveException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    void setPlayControllerVisible(boolean isVisible) {
-
-    }
 
     // 连麦远端视频组件等比缩放
     private RelativeLayout.LayoutParams getRemoteRenderSizeParams() {
@@ -753,48 +854,16 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         return params;
     }
 
-    public void showClosePopupWindow() {
-        mExitPopup.show(mRoot);
-    }
+
+    //-------------------------- CC SDK 直播视频 连麦相关 END -----------------------------
+
+    Handler handler = new Handler(Looper.getMainLooper());
+
+    // 可能出现没有username的情况，故先存储下来
+    private Map<String, String> userInfoMap = new HashMap<String, String>();
 
 
-    private ChatEntity getChatEntity(ChatMessage msg) {
-        ChatEntity chatEntity = new ChatEntity();
-        chatEntity.setUserId(msg.getUserId());
-        chatEntity.setUserName(msg.getUserName());
-        chatEntity.setPrivate(!msg.isPublic());
-
-        if (msg.getUserId().equals(dwLive.getViewer().getId())) {
-            chatEntity.setPublisher(true);
-        } else {
-            chatEntity.setPublisher(false);
-        }
-
-        chatEntity.setMsg(msg.getMessage());
-        chatEntity.setTime(msg.getTime());
-        chatEntity.setUserAvatar(msg.getAvatar());
-        return chatEntity;
-    }
-
-    private ChatEntity getChatEntity(PrivateChatInfo info, boolean isPublisher) {
-        ChatEntity chatEntity = new ChatEntity();
-        chatEntity.setUserId(info.getFromUserId());
-        chatEntity.setUserName(info.getFromUserName());
-        chatEntity.setPrivate(true);
-        chatEntity.setReceiveUserId(info.getToUserId());
-
-        if (info.getToUserName() == null && userInfoMap.containsKey(info.getToUserId())) {
-            info.setToUserName(userInfoMap.get(info.getToUserId()));
-        }
-        chatEntity.setReceivedUserName(info.getToUserName());
-        chatEntity.setReceiveUserAvatar(""); //TODO
-        chatEntity.setPublisher(isPublisher);
-        chatEntity.setMsg(info.getMsg());
-        chatEntity.setTime(info.getTime());
-        chatEntity.setUserAvatar("");
-        return chatEntity;
-    }
-
+    /** 直播回调接口（核心）*/
     private DWLiveListener myDWLiveListener = new DWLiveListener() {
         @Override
         public void onQuestion(final Question question) {
@@ -1022,31 +1091,14 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
          */
         @Override
         public void onHistoryBroadcastMsg(final ArrayList<BroadCastMsg> msgs) {
-
             // 判断空
             if (msgs == null) {
                 return;
             }
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (chatLayoutController != null) {
-                        for (int i = 0; i < msgs.size(); i++) {
-                            // 构建一个对象
-                            ChatEntity chatEntity = new ChatEntity();
-                            chatEntity.setUserId("");
-                            chatEntity.setUserName("");
-                            chatEntity.setPrivate(false);
-                            chatEntity.setPublisher(true);
-                            chatEntity.setMsg("系统消息: " + msgs.get(i).getContent());
-                            chatEntity.setTime("");
-                            chatEntity.setUserAvatar("");
-                            chatLayoutController.addChatEntity(chatEntity);
-                        }
-                    }
-                }
-            });
+            // 展示历史广播信息
+            for (int i = 0; i < msgs.size(); i++) {
+                showBroadcastMsg(msgs.get(i).getContent());
+            }
         }
 
         /**
@@ -1055,30 +1107,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
          * @param msg 广播消息
          */
         @Override
-        public void onBroadcastMsg(final String msg) {
-
-            // 判断空
-            if (msg == null || msg.isEmpty()) {
-                return;
-            }
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (chatLayoutController != null) {
-                        // 构建一个对象
-                        ChatEntity chatEntity = new ChatEntity();
-                        chatEntity.setUserId("");
-                        chatEntity.setUserName("");
-                        chatEntity.setPrivate(false);
-                        chatEntity.setPublisher(true);
-                        chatEntity.setMsg("系统消息: " + msg);
-                        chatEntity.setTime("");
-                        chatEntity.setUserAvatar("");
-                        chatLayoutController.addChatEntity(chatEntity);
-                    }
-                }
-            });
+        public void onBroadcastMsg(String msg) {
+            // 展示广播信息
+            showBroadcastMsg(msg);
         }
 
         @Override
@@ -1131,8 +1162,14 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         public void isPlayedBack(boolean b) {
         }
 
+        /**
+         * 统计需要使用的参数
+         * @deprecated 已弃用
+         * @param map 统计相关参数
+         */
         @Override
         public void onStatisticsParams(Map<String, String> map) {
+            // 不需要在此回调里实现任何逻辑
         }
 
         @Override
@@ -1182,421 +1219,175 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
             });
         }
 
-        /** 公告 */
+        /**
+         * 公告
+         *
+         * @param isRemove     是否是公告删除，如果为true，表示公告删除且announcement参数为null
+         * @param announcement 公告内容
+         */
         @Override
         public void onAnnouncement(final boolean isRemove, final String announcement) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (pcLivePortraitViewManager.isAnnouncementShown() || pcLiveLandscapeViewManager.isAnnouncementShown()) {
-                        pcLiveLandscapeViewManager.onNewAnnounce(isRemove, announcement, true);
-                        pcLivePortraitViewManager.onNewAnnounce(isRemove, announcement, true);
-                    } else {
-                        pcLiveLandscapeViewManager.onNewAnnounce(isRemove, announcement, false);
-                        pcLivePortraitViewManager.onNewAnnounce(isRemove, announcement, false);
-                    }
-
-                }
-            });
+            showNewAnnounce(isRemove, announcement);
         }
 
+
+        /**
+         * 签到回调
+         *
+         * @param duration 签到持续时间，单位为秒
+         */
         @Override
-        public void onRollCall(final int duration) {
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mRollcallPopup != null) {
-                        mRollcallPopup.show(mRoot);
-                        mRollcallPopup.startRollcall(duration);
-                    }
-                }
-            });
+        public void onRollCall(int duration) {
+            startRollCall(duration);
         }
 
-        boolean isLotteryWin = false;
+        /**
+         * 开始抽奖
+         *
+         * @param lotteryId 本次抽奖的id
+         */
         @Override
         public void onStartLottery(String lotteryId) {
-            isLotteryWin = false;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mLotteryStartPopup.show(mRoot);
-                    mLotteryStartPopup.startLottery();
-                }
-            });
-
+            startLottery(lotteryId);
         }
 
+
+        /**
+         * 抽奖结果
+         *
+         * @param isWin       是否中奖，true表示中奖了
+         * @param lotteryCode 中奖码
+         * @param lotteryId   本次抽奖的id
+         * @param winnerName  中奖者的名字
+         */
         @Override
         public void onLotteryResult(final boolean isWin, final String lotteryCode, final String lotteryId, final String winnerName) {
-
-            // 如果已经中奖了，而且中奖界面没有关闭，则不做后续的界面处理
-            if (isLotteryWin && mLotteryPopup.isShowing()) {
-                return;
-            }
-
-            this.isLotteryWin = isWin;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mLotteryPopup.show(mRoot);
-                    mLotteryPopup.onLotteryResult(isWin, lotteryCode, winnerName);
-
-                    if (!isLotteryWin) {
-                        handler.postDelayed(dismissLottery, lotteryDelay);
-                    }
-                }
-            });
+            showLotteryResult(isWin, lotteryCode, lotteryId, winnerName);
         }
 
+
+        /**
+         * 结束抽奖
+         *
+         * @param lotteryId 本次抽奖的id
+         */
         @Override
         public void onStopLottery(String lotteryId) {
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mLotteryStartPopup != null && mLotteryStartPopup.isShowing()) {
-                        mLotteryStartPopup.dismiss();
-                    }
-
-                    if (!isLotteryWin) {
-                        handler.postDelayed(dismissLottery, lotteryDelay);
-                    }
-                }
-            });
+            stopLottery(lotteryId);
         }
 
-        boolean isVoteResultShow = false;
+        /**
+         * 开始投票
+         *
+         * @param voteCount 总共的选项个数2-5
+         * @param VoteType  0表示单选，1表示多选，目前只有单选
+         */
         @Override
         public void onVoteStart(final int voteCount, final int VoteType) {
-            isVoteResultShow = false;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mVotePopup.startVote(voteCount, VoteType);
-                    mVotePopup.show(mRoot);
-                }
-            });
-
+            // 开始投票
+            startVote(voteCount, VoteType);
         }
 
+        /**
+         * 结束投票
+         */
         @Override
         public void onVoteStop() {
-
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (isVoteResultShow) {
-                        return;
-                    } else {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mVotePopup.dismiss();
-                            }
-                        });
-                    }
-                }
-            }, 1000);
+            // 结束投票
+            stopVote();
         }
 
+        /**
+         * 投票结果统计
+         */
         @Override
         public void onVoteResult(final JSONObject jsonObject) {
-            isVoteResultShow = true;
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mVotePopup.onVoteResult(jsonObject);
-                    mVotePopup.show(mRoot);
-                }
-            });
+            // 展示投票结果统计
+            showVoteResult(jsonObject);
         }
 
+        /**
+         * 发布问卷
+         *
+         * @param info 问卷内容
+         */
         @Override
         public void onQuestionnairePublish(final QuestionnaireInfo info) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mQuestionnairePopup.setQuestionnaireInfo(info);
-                    mQuestionnairePopup.show(mRoot);
-                }
-            });
+            // 开始问卷答题
+            startQuestionnaire(info);
         }
 
+        /**
+         * 停止问卷
+         */
         public void onQuestionnaireStop(final String questionnaireId) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mQuestionnairePopup != null && mQuestionnairePopup.isShowing()) {
-                        if (!mQuestionnairePopup.hasSubmitedQuestionnaire()) {
-                            mQuestionnaireStopPopup.show(mRoot);
-                        }
-                    }
-                }
-            });
+            // 停止问卷答题
+            stopQuestionnaire();
         }
 
+        /**
+         * 问卷统计信息
+         */
         @Override
-        public void onQuestionnaireStatis(final QuestionnaireStatisInfo info) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mQuestionnaireStatisPopup.setQuestionnaireStatisInfo(info);
-                    mQuestionnaireStatisPopup.show(mRoot);
-                }
-            });
+        public void onQuestionnaireStatis(QuestionnaireStatisInfo info) {
+            // 展示问卷统计信息
+            showQuestionnaireStatis(info);
         }
 
-        public void onExeternalQuestionnairePublish(final String title, final String externalUrl) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (mExeternalQuestionnairePopup != null) {
-                        mExeternalQuestionnairePopup.setQuestionnaireInfo(title, externalUrl);
-                        mExeternalQuestionnairePopup.show(mRoot);
-                    }
-                }
-            });
+        /**
+         * 发布第三方问卷
+         *
+         * @param title 问卷标题
+         * @param externalUrl 第三方问卷链接
+         */
+        public void onExeternalQuestionnairePublish(String title, String externalUrl) {
+            // 展示第三方问卷
+            showExeternalQuestionnaire(title, externalUrl);
         }
     };
 
-    int lotteryDelay = 3 * 1000;
-
-    Runnable dismissLottery = new Runnable() {
-        @Override
-        public void run() {
-            if (mLotteryPopup != null && mLotteryPopup.isShowing()) {
-                mLotteryPopup.dismiss();
-            }
-        }
-    };
-
-    @Override
-    protected void onDestroy() {
-        pcLiveLandscapeViewManager.onDestroy();
-
-        handler.removeCallbacks(dismissLottery);
-
-        if (qaLayoutController != null) {
-            qaLayoutController.removeTipsHideCallBack();
-        }
-
-        if (mRollcallPopup != null) {
-            mRollcallPopup.onDestroy();
-        }
-
-        if (player != null) {
-            player.pause();
-            player.stop();
-            player.release();
-        }
-
-        localRender.release();
-        remoteRender.release();
-
-        if (mSoftKeyBoardState != null) {
-            mSoftKeyBoardState.release();
-        }
-
-        cancel10sTimerTask();
-        stopCmTimer();
-
-        dwLive.onDestroy();
-
-        super.onDestroy();
-    }
 
 
-    boolean isOnPause = false;
+    // --------------------- 聊天功能辅助方法  ---------------------
 
-    @Override
-    protected void onPause() {
+    private ChatEntity getChatEntity(ChatMessage msg) {
+        ChatEntity chatEntity = new ChatEntity();
+        chatEntity.setUserId(msg.getUserId());
+        chatEntity.setUserName(msg.getUserName());
+        chatEntity.setPrivate(!msg.isPublic());
 
-        isPrepared = false;
-        isOnPause = true;
-
-        // 如果当前存在悬浮窗，就退出悬浮窗
-        if (floatingView != null) {
-            floatingView.removeView();
-            pc_live_main.addView(rlLiveTopLayout, 0);
-            rlLiveTopLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-            floatingView.quit();
-            floatingView = null;
-        }
-
-        if (player != null && player.isPlaying()) {
-            player.pause();
-        }
-
-        hideSpeak();
-
-        if (qaLayoutController != null) {
-            qaLayoutController.clearQaInfo();
-        }
-
-
-        pcLiveLandscapeViewManager.onPause();
-
-        dwLive.stop();
-
-        mRollcallPopup.dismissImmediate();
-
-        super.onPause();
-    }
-
-    /** isOnResumeStart 的意义在于部分手机从Home跳回到APP的时候，不会触发onSurfaceTextureAvailable */
-    boolean isOnResumeStart = false;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // 判断是否在文档全屏模式下，如果在，就退出全屏模式，触发重新拉流的操作
-        if (inDocFullMode) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        }
-
-        isOnResumeStart = false;
-        if (surface != null) {
-            dwLive.start(surface);
-            isOnResumeStart = true;
-        }
-    }
-
-    Surface surface;
-
-    @Override
-    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
-        surface = new Surface(surfaceTexture);
-        if (player.isPlaying()) {
-            player.setSurface(surface);
+        if (msg.getUserId().equals(dwLive.getViewer().getId())) {
+            chatEntity.setPublisher(true);
         } else {
-            dwLive.start(surface);
-        }
-    }
-
-    @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surfaceTexture, int i, int i1) {
-
-    }
-
-    @Override
-    public boolean onSurfaceTextureDestroyed(SurfaceTexture surfaceTexture) {
-        surface = null;
-        return false;
-    }
-
-    @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surfaceTexture) {
-
-    }
-
-    boolean isPrepared = false;
-
-    @Override
-    public void onPrepared(IMediaPlayer iMediaPlayer) {
-        isPrepared = true;
-        player.start();
-
-        pcPortraitProgressBar.setVisibility(View.GONE);
-        tvPcPortraitStatusTips.setVisibility(View.GONE);
-
-        if (rtcPopup.isShow()) {
-            return;
+            chatEntity.setPublisher(false);
         }
 
-        if (isPortrait()) {
-            setPortraitLayoutVisibility(View.VISIBLE);
-        } else {
-            rlLandscapeLayout.setVisibility(View.VISIBLE);
-            pcLiveLandscapeViewManager.setScreenVisible(true, false);
-        }
+        chatEntity.setMsg(msg.getMessage());
+        chatEntity.setTime(msg.getTime());
+        chatEntity.setUserAvatar(msg.getAvatar());
+        return chatEntity;
     }
 
-    private void setPortraitLayoutVisibility(int i) {
-        rlPortraitLayout.setVisibility(i);
-        rlLiveInfosLayout.setVisibility(i);
-        pcLivePortraitViewManager.setScreenVisible(true, false);
+    private ChatEntity getChatEntity(PrivateChatInfo info, boolean isPublisher) {
+        ChatEntity chatEntity = new ChatEntity();
+        chatEntity.setUserId(info.getFromUserId());
+        chatEntity.setUserName(info.getFromUserName());
+        chatEntity.setPrivate(true);
+        chatEntity.setReceiveUserId(info.getToUserId());
+
+        if (info.getToUserName() == null && userInfoMap.containsKey(info.getToUserId())) {
+            info.setToUserName(userInfoMap.get(info.getToUserId()));
+        }
+        chatEntity.setReceivedUserName(info.getToUserName());
+        chatEntity.setReceiveUserAvatar("");
+        chatEntity.setPublisher(isPublisher);
+        chatEntity.setMsg(info.getMsg());
+        chatEntity.setTime(info.getTime());
+        chatEntity.setUserAvatar("");
+        return chatEntity;
     }
 
-    @Override
-    public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sar_num, int sar_den) {
-
-        if (width == 0 || height == 0) {
-            return;
-        }
-        mPlayerContainer.setLayoutParams(getVideoSizeParams());
-    }
-
-    // 视频等比缩放
-    private RelativeLayout.LayoutParams getVideoSizeParams() {
-
-        int width = wm.getDefaultDisplay().getWidth();
-        int height= 0;
-        if(isPortrait()) {
-            height = wm.getDefaultDisplay().getHeight() / 3;
-        } else {
-            height = wm.getDefaultDisplay().getHeight();
-        }
-
-
-        int vWidth = player.getVideoWidth();
-        int vHeight = player.getVideoHeight();
-
-        if (vWidth == 0) {
-            vWidth = 600;
-        }
-        if (vHeight == 0) {
-            vHeight = 400;
-        }
-
-        if (vWidth > width || vHeight > height) {
-            float wRatio = (float) vWidth / (float) width;
-            float hRatio = (float) vHeight / (float) height;
-            float ratio = Math.max(wRatio, hRatio);
-
-            width = (int) Math.ceil((float) vWidth / ratio);
-            height = (int) Math.ceil((float) vHeight / ratio);
-        } else {
-            float wRatio = (float) width / (float) vWidth;
-            float hRatio = (float) height / (float) vHeight;
-            float ratio = Math.min(wRatio, hRatio);
-
-            width = (int) Math.ceil((float) vWidth * ratio);
-            height = (int) Math.ceil((float) vHeight * ratio);
-        }
-
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width, height);
-        params.addRule(RelativeLayout.CENTER_IN_PARENT);
-        return params;
-    }
-
-    private boolean isPortrait() {
-        int mOrientation = getApplicationContext().getResources().getConfiguration().orientation;
-        if (mOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (!isPortrait()) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            return;
-        } else {
-            if (pcLiveLandscapeViewManager.onBackPressed()) {
-                return;
-            }
-
-            if (chatLayoutController != null && chatLayoutController.onBackPressed()) {
-                return;
-            }
-        }
-
-        mExitPopup.show(mRoot);
-    }
+    // --------------------- 音视频模式切换  ---------------------
 
     private boolean isVideo = true;
 
@@ -1620,8 +1411,25 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         pcLiveLandscapeViewManager.onVideoAudioChanged(isVideo);
     }
 
+
+    // --------------------- 线路切换  ---------------------
+
+    public void changeSource(boolean isPortartLayout, int selectItem) {
+
+        if (isPortartLayout) {
+            pcLiveLandscapeViewManager.updateSourceSelectItem(selectItem);
+        } else {
+            pcLivePortraitViewManager.updateSourceSelectItem(selectItem);
+        }
+
+        dwLive.changePlaySource(selectItem);
+    }
+
+    // --------------------- 弹幕功能  ---------------------
+
     private boolean isBarrageOn = true;
 
+    /** 更改弹幕功能状态 */
     public void changeBarrageStatus() {
         if (isBarrageOn) {
             blPcBarrage.setVisibility(View.GONE);
@@ -1636,37 +1444,299 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         changeBarrageIcon();
     }
 
+    /** 更改弹幕功能图标 */
     private void changeBarrageIcon() {
         pcLivePortraitViewManager.onBarrageChanged(isBarrageOn);
         pcLiveLandscapeViewManager.onBarrageChanged(isBarrageOn);
     }
 
+    // ---------------------- Demo 功能实现 广播、公告、签到、抽奖、投票、问卷 Start -----------------
 
-    public void changeSource(boolean isPortartLayout, int selectItem) {
 
-        if (isPortartLayout) {
-            pcLiveLandscapeViewManager.updateSourceSelectItem(selectItem);
-        } else {
-            pcLivePortraitViewManager.updateSourceSelectItem(selectItem);
+
+    // --------------------- 广播  ---------------------
+    /** 展示广播内容 */
+    private void showBroadcastMsg(final String msg) {
+
+        // 判断空
+        if (msg == null || msg.isEmpty()) {
+            return;
         }
 
-        dwLive.changePlaySource(selectItem); //TODO 可能会慢
+        // 目前demo实现的是将广播放到聊天区域展示
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (chatLayoutController != null) {
+                    // 构建一个对象
+                    ChatEntity chatEntity = new ChatEntity();
+                    chatEntity.setUserId("");
+                    chatEntity.setUserName("");
+                    chatEntity.setPrivate(false);
+                    chatEntity.setPublisher(true);
+                    chatEntity.setMsg("系统消息: " + msg);
+                    chatEntity.setTime("");
+                    chatEntity.setUserAvatar("");
+                    chatLayoutController.addChatEntity(chatEntity);
+                }
+            }
+        });
     }
 
+    // --------------------- 公告  ---------------------
+
+    /** 展示新公告 */
+    public void showNewAnnounce(final boolean isRemove, final String announcement) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (pcLivePortraitViewManager.isAnnouncementShown() || pcLiveLandscapeViewManager.isAnnouncementShown()) {
+                    pcLiveLandscapeViewManager.onNewAnnounce(isRemove, announcement, true);
+                    pcLivePortraitViewManager.onNewAnnounce(isRemove, announcement, true);
+                } else {
+                    pcLiveLandscapeViewManager.onNewAnnounce(isRemove, announcement, false);
+                    pcLivePortraitViewManager.onNewAnnounce(isRemove, announcement, false);
+                }
+            }
+        });
+    }
+
+    /** 展示直播间公告 */
     public void onShowAnnounce() {
         pcLiveLandscapeViewManager.onShowAnnouce();
         pcLivePortraitViewManager.onShowAnnounce();
     }
 
-    // 切换至文档全屏
-    public void onShowDocFull() {
-        if (isPortrait()) {
-            toDocFullMode = true;
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
+    // --------------------- 签到  ---------------------
+
+    private RollCallPopup mRollcallPopup;
+
+    /** 初始化签到的弹出界面 */
+    private void initRollcallPopup() {
+        mRollcallPopup = new RollCallPopup(this);
     }
 
-    //------------------------下方布局------------------------
+    /** 开始签到 */
+    public void startRollCall(final int duration) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mRollcallPopup != null) {
+                    mRollcallPopup.show(mRoot);
+                    mRollcallPopup.startRollcall(duration);
+                }
+            }
+        });
+    }
+
+    // --------------------- 抽奖  ---------------------
+
+    private LotteryStartPopup mLotteryStartPopup; // 开始抽奖弹出框
+    private LotteryPopup mLotteryPopup;  // 抽奖结果弹出框
+
+    boolean isLotteryWin = false;
+
+    int lotteryDelay = 3 * 1000;
+
+    Runnable dismissLottery = new Runnable() {
+        @Override
+        public void run() {
+            if (mLotteryPopup != null && mLotteryPopup.isShowing()) {
+                mLotteryPopup.dismiss();
+            }
+        }
+    };
+
+    /** 初始化抽奖的弹出界面 */
+    private void initLotteryPopup() {
+        mLotteryStartPopup = new LotteryStartPopup(this);
+        mLotteryStartPopup.setKeyBackCancel(true);
+        mLotteryPopup = new LotteryPopup(this);
+        mLotteryPopup.setKeyBackCancel(true);
+    }
+
+    /** 开始抽奖 */
+    public void startLottery(String lotteryId) {
+        isLotteryWin = false;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLotteryStartPopup.show(mRoot);
+                mLotteryStartPopup.startLottery();
+            }
+        });
+    }
+
+    /** 展示抽奖结果 */
+    public void showLotteryResult(final boolean isWin, final String lotteryCode, final String lotteryId, final String winnerName) {
+        // 如果已经中奖了，而且中奖界面没有关闭，则不做后续的界面处理
+        if (isLotteryWin && mLotteryPopup.isShowing()) {
+            return;
+        }
+
+        this.isLotteryWin = isWin;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mLotteryPopup.show(mRoot);
+                mLotteryPopup.onLotteryResult(isWin, lotteryCode, winnerName);
+
+                if (!isLotteryWin) {
+                    handler.postDelayed(dismissLottery, lotteryDelay);
+                }
+            }
+        });
+    }
+
+    /** 停止抽奖 */
+    public void stopLottery(String lotteryId) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mLotteryStartPopup != null && mLotteryStartPopup.isShowing()) {
+                    mLotteryStartPopup.dismiss();
+                }
+
+                if (!isLotteryWin) {
+                    handler.postDelayed(dismissLottery, lotteryDelay);
+                }
+            }
+        });
+    }
+
+    // --------------------- 投票  ---------------------
+
+    private VotePopup mVotePopup;
+
+    boolean isVoteResultShow = false;
+
+    /** 初始化投票的弹出界面 */
+    private void initVotePopup() {
+        mVotePopup = new VotePopup(this);
+    }
+
+    /** 开始投票 */
+    private void startVote(final int voteCount, final int VoteType) {
+        isVoteResultShow = false;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mVotePopup.startVote(voteCount, VoteType);
+                mVotePopup.show(mRoot);
+            }
+        });
+    }
+
+    /** 结束投票 */
+    private void stopVote() {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (isVoteResultShow) {
+                    return;
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mVotePopup.dismiss();
+                        }
+                    });
+                }
+            }
+        }, 1000);
+    }
+
+    /** 展示投票结果统计 */
+    private void showVoteResult(final JSONObject jsonObject) {
+        isVoteResultShow = true;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mVotePopup.onVoteResult(jsonObject);
+                mVotePopup.show(mRoot);
+            }
+        });
+    }
+
+    // --------------------- 问卷  ---------------------
+
+    private QuestionnairePopup mQuestionnairePopup;  // 问卷弹出界面
+    private QuestionnaireStopPopup mQuestionnaireStopPopup; // 问卷结束弹出界面
+    private ExeternalQuestionnairePopup mExeternalQuestionnairePopup; // 第三方问卷弹出界面
+    private QuestionnaireStatisPopup mQuestionnaireStatisPopup; // 问卷统计界面
+
+    /** 初始化问卷的弹出界面 */
+    private void initQuestionnairePopup() {
+        mQuestionnairePopup = new QuestionnairePopup(this);
+        mExeternalQuestionnairePopup = new ExeternalQuestionnairePopup(this);
+
+        mQuestionnaireStopPopup = new QuestionnaireStopPopup(this);
+        mQuestionnaireStopPopup.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                if (mQuestionnairePopup != null) {
+                    mQuestionnairePopup.dismiss();
+                }
+            }
+        });
+
+        mQuestionnaireStatisPopup = new QuestionnaireStatisPopup(this);
+    }
+
+    /** 开始问卷答题 */
+    private void startQuestionnaire(final QuestionnaireInfo info) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mQuestionnairePopup.setQuestionnaireInfo(info);
+                mQuestionnairePopup.show(mRoot);
+            }
+        });
+    }
+
+    /** 停止问卷答题 */
+    private void stopQuestionnaire() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mQuestionnairePopup != null && mQuestionnairePopup.isShowing()) {
+                    if (!mQuestionnairePopup.hasSubmitedQuestionnaire()) {
+                        mQuestionnaireStopPopup.show(mRoot);
+                    }
+                }
+            }
+        });
+    }
+
+    /** 展示问卷统计信息 */
+    private void showQuestionnaireStatis(final QuestionnaireStatisInfo info) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mQuestionnaireStatisPopup.setQuestionnaireStatisInfo(info);
+                mQuestionnaireStatisPopup.show(mRoot);
+            }
+        });
+    }
+
+    /** 展示第三方问卷 */
+    private void showExeternalQuestionnaire(final String title, final String externalUrl) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mExeternalQuestionnairePopup != null) {
+                    mExeternalQuestionnairePopup.setQuestionnaireInfo(title, externalUrl);
+                    mExeternalQuestionnairePopup.show(mRoot);
+                }
+            }
+        });
+    }
+
+
+    // ---------------------- Demo 功能实现 广播、公告、签到、抽奖、投票、问卷 END -----------------
+
+
+    // --------------------- Demo 视频下方布局 问答、聊天、问答、简介布局 Start --------------------
 
     @BindView(R.id.rg_infos_tag)
     RadioGroup tagRadioGroup;
@@ -1695,79 +1765,29 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     View qaLayout;
     View introLayout;
 
-
     DocLayoutController docLayoutController;
     ChatLayoutController chatLayoutController;
     QaLayoutController qaLayoutController;
     IntroLayoutController introLayoutController;
 
-    private String viewVisibleTag = "1";
-
-    private DocView docView;
-
-    private boolean toDocFullMode;  // 是否要进入文档全屏模式
-    private boolean inDocFullMode;  // 当前是否在文档全屏模式
+    private final static String VIEW_VISIBLE_TAG = "1";
 
     // 双击全屏相关
     boolean isMove = false;
     private final static int DOUBLE_TAP_TIMEOUT = 200;
     private MotionEvent mPreviousUpEvent;
 
-    /**
-     * 检测是否是双击
-     */
-    private boolean isConsideredDoubleTap(MotionEvent firstUp, MotionEvent secondDown){
-        if (secondDown.getEventTime() - firstUp.getEventTime() > DOUBLE_TAP_TIMEOUT) {
-            return false;
-        }
-        int deltaX =(int) firstUp.getX() - (int)secondDown.getX();
-        int deltaY =(int) firstUp.getY()- (int)secondDown.getY();
-        return deltaX * deltaX + deltaY * deltaY < 10000;
-    }
+    private boolean toDocFullMode;  // 是否要进入文档全屏模式
+    private boolean inDocFullMode;  // 当前是否在文档全屏模式
 
+    private DocView docView;
+
+    // 初始化下方布局的ViewPager
     private void initViewPager() {
 
         LayoutInflater inflater = LayoutInflater.from(this);
 
-        if (viewVisibleTag.equals(dwLive.getTemplateInfo().getPdfView())) {
-            initDocLayout(inflater);
-            docView = docLayoutController.getDocView();
-            docView.setClickable(true);
-
-            // 设置触摸监听，判断双击事件
-            docView.setTouchEventListener(new DocView.TouchEventListener() {
-                @Override
-                public void onTouchEvent(MotionEvent event) {
-                    if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                        isMove = true;
-                    }
-                    else if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        if (mPreviousUpEvent != null && isConsideredDoubleTap(mPreviousUpEvent, event)) {
-                            if (isPortrait()) {
-                                // 进入文档全屏
-                                onShowDocFull();
-                            } else {
-                                // 退出文档全屏
-                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-                            }
-                        }
-                    }else if (event.getAction() == MotionEvent.ACTION_UP){
-                        mPreviousUpEvent = MotionEvent.obtain(event);
-                        isMove = false;
-                    }
-                }
-            });
-        }
-
-        if (viewVisibleTag.equals(dwLive.getTemplateInfo().getChatView())) {
-            initChatLayout(inflater);
-        }
-
-        if (viewVisibleTag.equals(dwLive.getTemplateInfo().getQaView())) {
-            initQaLayout(inflater);
-        }
-
-        initIntroLayout(inflater);
+        initLayout(inflater);
 
         PagerAdapter adapter = new PagerAdapter() {
             @Override
@@ -1827,9 +1847,69 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         } else {
             tagRBList.get(0).performClick();
         }
-
     }
 
+    // 初始化下方布局区域
+    private void initLayout(LayoutInflater inflater) {
+
+        // 获取当前直播间的模版信息
+        TemplateInfo templateInfo = dwLive.getTemplateInfo();
+
+        // 判断空
+        if (templateInfo == null) {
+            return;
+        }
+
+        // 判断当前直播间是否有文档
+        if (VIEW_VISIBLE_TAG.equals(dwLive.getTemplateInfo().getPdfView())) {
+
+            // 初始化文档布局
+            initDocLayout(inflater);
+            docView = docLayoutController.getDocView();
+            docView.setClickable(true);
+
+            // 设置触摸监听，判断双击事件
+            docView.setTouchEventListener(new DocView.TouchEventListener() {
+                @Override
+                public void onTouchEvent(MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                        isMove = true;
+                    }
+                    else if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        if (mPreviousUpEvent != null && isConsideredDoubleTap(mPreviousUpEvent, event)) {
+                            if (isPortrait()) {
+                                // 进入文档全屏
+                                onShowDocFull();
+                            } else {
+                                // 退出文档全屏
+                                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                            }
+                        }
+                    }else if (event.getAction() == MotionEvent.ACTION_UP){
+                        mPreviousUpEvent = MotionEvent.obtain(event);
+                        isMove = false;
+                    }
+                }
+            });
+        }
+
+        // 判断当前直播间是否有聊天
+        if (VIEW_VISIBLE_TAG.equals(dwLive.getTemplateInfo().getChatView())) {
+            // 初始化聊天布局
+            initChatLayout(inflater);
+        }
+
+        // 判断当前直播间是否有问答
+        if (VIEW_VISIBLE_TAG.equals(dwLive.getTemplateInfo().getQaView())) {
+            // 初始化问答布局
+            initQaLayout(inflater);
+        }
+
+        // 初始化简介布局
+        initIntroLayout(inflater);
+    }
+
+    // 初始化文档布局区域
     private void initDocLayout(LayoutInflater inflater) {
         tagIdList.add(R.id.live_portrait_info_document);
         tagRBList.add(docTag);
@@ -1840,6 +1920,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         docLayoutController = new DocLayoutController(this, docLayout);
     }
 
+    // 初始化聊天布局区域
     private void initChatLayout(LayoutInflater inflater) {
         tagIdList.add(R.id.live_portrait_info_chat);
         tagRBList.add(chatTag);
@@ -1852,6 +1933,7 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
 
     }
 
+    // 初始化问答布局区域
     private void initQaLayout(LayoutInflater inflater) {
         tagIdList.add(R.id.live_portrait_info_qa);
         tagRBList.add(qaTag);
@@ -1863,8 +1945,8 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         qaLayoutController.initQaLayout();
     }
 
+    // 初始化简介布局区域
     private void initIntroLayout(LayoutInflater inflater) {
-
         tagIdList.add(R.id.live_portrait_info_intro);
         tagRBList.add(introTag);
         introTag.setVisibility(View.VISIBLE);
@@ -1875,668 +1957,106 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         introLayoutController.initIntro();
     }
 
+    // 切换至文档全屏 -- 具体文档全屏逻辑在 onConfigurationChanged 方法中
+    public void onShowDocFull() {
+        if (isPortrait()) {
+            toDocFullMode = true;
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+    }
+
+
+    //--------------------- Demo 视频下方布局 问答、聊天、问答、简介布局 END --------------------
+
+
+    //-------------------------- Demo 退出观看页逻辑 --------------------------
+
+    private CommonPopup mExitPopup; // 退出界面弹出框
+
+    /** 初始化结束观看弹出界面 */
+    private void initClosePopup() {
+        mExitPopup = new CommonPopup(this);
+        mExitPopup.setOutsideCancel(true);
+        mExitPopup.setKeyBackCancel(true);
+        mExitPopup.setTip("您确认结束观看吗?");
+        mExitPopup.setOKClickListener(new CommonPopup.OnOKClickListener() {
+            @Override
+            public void onClick() {
+                finish();
+            }
+        });
+    }
+
+    public void showClosePopupWindow() {
+        mExitPopup.show(mRoot);
+    }
+
+    // Back 键相关逻辑处理
+    @Override
+    public void onBackPressed() {
+        if (!isPortrait()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            return;
+        } else {
+            if (pcLiveLandscapeViewManager.onBackPressed()) {
+                return;
+            }
+
+            if (chatLayoutController != null && chatLayoutController.onBackPressed()) {
+                return;
+            }
+        }
+
+        mExitPopup.show(mRoot);
+    }
+
+    //-------------------------- Demo 观看页 工具方法 -------------------------------
+
+    private InputMethodManager mImm;
+
+    // 软键盘监听
+    private SoftKeyBoardState mSoftKeyBoardState;
+
+    private void onSoftInputChange() {
+        mImm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        mSoftKeyBoardState = new SoftKeyBoardState(mRoot, false);
+        mSoftKeyBoardState.setOnSoftKeyBoardStateChangeListener(new SoftKeyBoardState.OnSoftKeyBoardStateChangeListener() {
+            @Override
+            public void onChange(boolean isShow) {
+                pcLiveLandscapeViewManager.onSoftKeyChange(isShow);
+            }
+        });
+    }
+
+    // 隐藏输入法
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(rlLiveTopLayout.getWindowToken(), 0);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(rlLiveTopLayout.getWindowToken(), 0);
+        }
     }
 
-    //----------------------文档----------------------------
-    public class DocLayoutController {
-
-        @BindView(R.id.live_doc)
-        DocView mDocView;
-
-
-        Context mContext;
-
-        public DocLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
-        }
-
-        public DocView getDocView() {
-            return mDocView;
-        }
-
-
-    }
-
-    Handler handler = new Handler(Looper.getMainLooper());
-
-    // 可能出现没有username的情况，故先存储下来
-    private Map<String, String> userInfoMap = new HashMap<String, String>();
-
-    //----------------------聊天-----------------------------
-    public class ChatLayoutController {
-
-        //TODO 多个pager切换的隐藏操作需要实现
-
-        @BindView(R.id.chat_container)
-        RecyclerView mChatList;
-
-        @BindView(R.id.id_private_chat_user_layout)
-        LinearLayout mPrivateChatUserLayout;
-
-        @BindView(R.id.id_push_chat_layout)
-        RelativeLayout mChatLayout;
-
-        @BindView(R.id.id_push_chat_input)
-        EditText mInput;
-
-        @BindView(R.id.id_push_chat_emoji)
-        ImageView mEmoji;
-
-        @BindView(R.id.id_push_emoji_grid)
-        GridView mEmojiGrid;
-
-        @BindView(R.id.iv_live_pc_private_chat)
-        ImageView mPrivateIcon;
-
-        @BindView(R.id.id_private_chat_msg_layout)
-        LinearLayout mPrivateChatMsgLayout;
-
-        @BindView(R.id.id_private_chat_user_list)
-        RecyclerView mPrivateChatUserList;
-
-        @BindView(R.id.id_private_chat_msg_mask)
-        FrameLayout mPrivateChatMsgMask;
-
-        @BindView(R.id.id_private_chat_title)
-        TextView mPrivateChatUserName;
-
-        @BindView(R.id.id_private_chat_list)
-        RecyclerView mPrivateChatMsgList;
-
-        // 软键盘是否显示
-        private boolean isSoftInput = false;
-        // emoji是否需要显示 emoji是否显示
-        private boolean isEmoji = false, isEmojiShow = false;
-        // 聊天是否显示
-        private boolean isChat = false;
-        // 是否是私聊
-        private boolean isPrivate = false;
-        // 是否显示私聊用户列表
-        private boolean isPrivateChatUser = false;
-        // 是否显示私聊列表
-        private boolean isPrivateChatMsg = false;
-        private String mCurPrivateUserId = "";
-
-        // 私聊用户列表适配器
-        private PrivateUserAdapter mPrivateUserAdapter;
-        // 私聊信息列表
-        private PrivateChatAdapter mPrivateChatAdapter;
-        private ChatUser mTo; // 私聊对象
-        private ArrayList<ChatEntity> mPrivateChats; // 存放所有的私聊信息
-
-        // 软键盘监听
-        private SoftKeyBoardState mSoftKeyBoardState;
-
-        Context mContext;
-
-        public ChatLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
-        }
-
-        LivePublicChatAdapter mChatAdapter;
-
-        public void initChat() {
-            mChatList.setLayoutManager(new LinearLayoutManager(mContext));
-            mChatAdapter = new LivePublicChatAdapter(mContext);
-            mChatList.setAdapter(mChatAdapter);
-            mChatList.addOnItemTouchListener(new BaseOnItemTouch(mChatList, new OnClickListener() {
-                @Override
-                public void onClick(RecyclerView.ViewHolder viewHolder) {
-                    int position = mChatList.getChildAdapterPosition(viewHolder.itemView);
-                    ChatEntity chatEntity = mChatAdapter.getChatEntities().get(position);
-                    click2PrivateChat(chatEntity, false);
-                }
-            }));
-
-            mChatList.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
-                    hideKeyboard();
-                    return false;
-                }
-            });
-
-            initChatView();
-        }
-
-
-        private short maxInput = 300;
-        public void initChatView() {
-
-            mInput.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    hideEmoji();
-                    return false;
-                }
-            });
-
-            mInput.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-
-                    String inputText = mInput.getText().toString();
-
-                    if (inputText.length() > maxInput) {
-                        Toast.makeText(getApplicationContext(), "字符数超过300字", Toast.LENGTH_SHORT).show();
-                        mInput.setText(inputText.substring(0, maxInput));
-                        mInput.setSelection(maxInput);
-                    }
-                }
-            });
-
-            EmojiAdapter emojiAdapter = new EmojiAdapter(mContext);
-            emojiAdapter.bindData(EmojiUtil.imgs);
-            mEmojiGrid.setAdapter(emojiAdapter);
-            mEmojiGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    if (mInput == null) {
-                        return;
-                    }
-
-                    // 一个表情span占位8个字符
-                    if (mInput.getText().length() + 8 > maxInput) {
-                        Toast.makeText(getApplicationContext(), "字符数超过300字", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    if (position == EmojiUtil.imgs.length - 1) {
-                        EmojiUtil.deleteInputOne(mInput);
-                    } else {
-                        EmojiUtil.addEmoji(mContext, mInput, position);
-                    }
-                }
-            });
-
-            mPrivateChats = new ArrayList<>(); // 初始化私聊数据集合
-
-            mPrivateChatUserList.setLayoutManager(new LinearLayoutManager(mContext));
-            mPrivateUserAdapter = new PrivateUserAdapter(mContext);
-            mPrivateChatUserList.setAdapter(mPrivateUserAdapter);
-            mPrivateChatUserList.addOnItemTouchListener(new BaseOnItemTouch(mPrivateChatUserList, new OnClickListener() {
-                @Override
-                public void onClick(RecyclerView.ViewHolder viewHolder) {
-                    // TODO 隐藏用户列表
-                    mPrivateChatUserLayout.setVisibility(View.GONE);
-                    isPrivateChatUser = false;
-                    int position = mPrivateChatUserList.getChildAdapterPosition(viewHolder.itemView);
-                    PrivateUser privateUser = mPrivateUserAdapter.getPrivateUsers().get(position);
-                    privateUser.setRead(true);
-                    mPrivateUserAdapter.notifyDataSetChanged();
-                    if (isAllPrivateChatRead()) {
-                        mPrivateIcon.setImageResource(R.mipmap.video_ic_private_msg_nor);
-                    }
-                    ChatEntity chatEntity = new ChatEntity();
-                    chatEntity.setUserId(privateUser.getId());
-                    chatEntity.setUserName(privateUser.getName());
-                    chatEntity.setUserAvatar(privateUser.getAvatar());
-                    click2PrivateChat(chatEntity, true);
-                }
-            }));
-
-            mPrivateChatMsgList.setLayoutManager(new LinearLayoutManager(mContext));
-            mPrivateChatAdapter = new PrivateChatAdapter(mContext);
-            mPrivateChatMsgList.setAdapter(mPrivateChatAdapter);
-
-            onSoftInputChange();
-        }
-
-        /**
-         * 点击发起私聊
-         */
-        private void click2PrivateChat(ChatEntity chatEntity, boolean flag) {
-            if (flag) { // 私聊用户列表点击发起私聊
-                goPrivateChat(chatEntity);
-                mCurPrivateUserId = chatEntity.getUserId();
-            } else {
-                if (!chatEntity.isPublisher()) { // 如果当前被点击的用户不是主播，则进行私聊
-                    hideKeyboard();
-                    mPrivateChatUserLayout.setVisibility(View.GONE);
-                    mPrivateIcon.setVisibility(View.GONE);
-                    goPrivateChat(chatEntity);
-                    mCurPrivateUserId = chatEntity.getUserId();
-                }
-            }
-        }
-
-        /**
-         * 跳转私聊
-         */
-        private void goPrivateChat(ChatEntity chatEntity) {
-            isPrivate = true;
-            mTo = null;
-            mTo = new ChatUser();
-            mTo.setUserId(chatEntity.getUserId());
-            mTo.setUserName(chatEntity.getUserName());
-            ArrayList<ChatEntity> toChatEntitys = new ArrayList<>();
-            for (ChatEntity entity : mPrivateChats) {
-                // 从私聊列表里面读取到 当前发起私聊的俩个用户聊天列表
-                if (entity.getUserId().equals(chatEntity.getUserId()) || entity.getReceiveUserId().equals(chatEntity.getUserId())) {
-                    toChatEntitys.add(entity);
-                }
-            }
-            mPrivateChatAdapter.setDatas(toChatEntitys);
-            showPrivateChatMsgList(chatEntity.getUserName());
-        }
-
-        /**
-         * 判断是否所有私聊信息全部读完
-         */
-        private boolean isAllPrivateChatRead() {
-            int i = 0;
-            for (; i < mPrivateUserAdapter.getPrivateUsers().size(); i++) {
-                if (!mPrivateUserAdapter.getPrivateUsers().get(i).isRead()) {
-                    break;
-                }
-            }
-            return i >= mPrivateUserAdapter.getPrivateUsers().size();
-        }
-
-        private void onSoftInputChange() {
-            mSoftKeyBoardState = new SoftKeyBoardState(mRoot, false);
-            mSoftKeyBoardState.setOnSoftKeyBoardStateChangeListener(new SoftKeyBoardState.OnSoftKeyBoardStateChangeListener() {
-                @Override
-                public void onChange(boolean isShow) {
-                    isSoftInput = isShow;
-                    if (!isSoftInput) { // 软键盘隐藏
-                        if (isEmoji) {
-                            mEmojiGrid.setVisibility(View.VISIBLE);// 避免闪烁
-                            isEmojiShow = true; // 修改emoji显示标记
-                            isEmoji = false; // 重置
-                        } else {
-                            hideChatLayout(); // 隐藏聊天操作区域
-                        }
-                        if (isPrivateChatMsg && !isEmojiShow) { // 私聊软键盘隐藏时，显示公聊列表
-                            mChatList.setVisibility(View.VISIBLE);
-                        }
-                    } else {
-                        hideEmoji();
-                        if (isPrivateChatMsg) { // 私聊进行消息输入的时候隐藏公聊列表
-                            mChatList.setVisibility(View.GONE);
-                        }
-                    }
-                }
-            });
-        }
-
-        @OnClick(R.id.iv_live_pc_private_chat)
-        void openPrivateChatUserList() { // 显示私聊用户列表
-            hideEmoji();
-            hideKeyboard();
-            showPrivateChatUserList();
-        }
-
-        @OnClick(R.id.id_private_chat_user_close)
-        void closePrivateChatUserList() { // 关闭私聊用户列表
-            hidePrivateChatUserList();
-        }
-
-        @OnClick(R.id.id_private_chat_close)
-        void closePrivate() { // 关闭私聊
-            hidePrivateChatMsgList();
-        }
-
-        @OnClick(R.id.id_push_chat_emoji)
-        void emoji() {
-            if (isEmojiShow) {
-                hideEmoji();
-                mInput.requestFocus();
-                mInput.setSelection(mInput.getEditableText().length());
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
-            } else {
-                showEmoji();
-            }
-        }
-
-        @OnClick(R.id.id_push_chat_send)
-        void sendMsg() { // 发送聊天
-            String msg = mInput.getText().toString().trim();
-            if (TextUtils.isEmpty(msg)) {
-                toastOnUiThread("聊天内容不能为空");
-                return;
-            }
-            if (isPrivate) {
-                DWLive.getInstance().sendPrivateChatMsg(mTo.getUserId(), msg);
-            } else {
-                DWLive.getInstance().sendPublicChatMsg(msg);
-            }
-
-            clearChatInput();
-        }
-
-        @OnClick(R.id.id_private_chat_back)
-        void backChatUser() { // 返回私聊用户列表
-            if (isSoftInput) {
-                mImm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
-            }
-            hidePrivateChatMsgList();
-            showPrivateChatUserList();
-        }
-
-        //TODO 看看是不是需要
-        void dismissAll() {
-            if (isSoftInput) {
-                mImm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
-            }
-            hideChatLayout();
-            hideEmoji();
-            hidePrivateChatUserList();
-            hidePrivateChatMsgList();
-        }
-
-        /**
-         * 显示私聊用户列表
-         */
-        private void showPrivateChatUserList() {
-            mChatLayout.setVisibility(View.GONE); // 隐藏聊天操作
-            mPrivateIcon.setVisibility(View.GONE);
-            mPrivateChatUserLayout.setVisibility(View.VISIBLE); // 显示用户列表
-            isPrivateChatUser = true;
-        }
-
-        /**
-         * 隐藏私聊用户
-         */
-        private void hidePrivateChatUserList() {
-            if (isPrivateChatUser) {
-                mChatLayout.setVisibility(View.VISIBLE);
-                mPrivateIcon.setVisibility(View.VISIBLE);
-                mPrivateChatUserLayout.setVisibility(View.GONE);
-                isPrivateChatUser = false;
-            }
-        }
-
-        public void hideChatLayout() {
-            if (isChat) {
-                AlphaAnimation animation = new AlphaAnimation(0f, 1f);
-                animation.setDuration(300L);
-                mInput.setFocusableInTouchMode(false);
-                mInput.clearFocus();
-                mChatLayout.setVisibility(View.VISIBLE);
-                isChat = false;
-            }
-        }
-
-        /**
-         * 显示emoji
-         */
-        public void showEmoji() {
-            if (isSoftInput) {
-                isEmoji = true; // 需要显示emoji
-                mInput.clearFocus();
-                mImm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
-            } else {
-                mEmojiGrid.setVisibility(View.VISIBLE);// 避免闪烁
-                isEmojiShow = true; // 修改emoji显示标记
-            }
-            mEmoji.setImageResource(R.drawable.push_chat_emoji);
-        }
-
-        /**
-         * 隐藏emoji
-         */
-        public void hideEmoji() {
-            if (isEmojiShow) { // 如果emoji显示
-                mEmojiGrid.setVisibility(View.GONE);
-                isEmojiShow = false; // 修改emoji显示标记
-                mEmoji.setImageResource(R.drawable.push_chat_emoji_normal);
-                if (!isSoftInput) {
-                    mChatList.setVisibility(View.VISIBLE);
-                }
-            }
-        }
-
-        /**
-         * 显示私聊信息列表
-         */
-        public void showPrivateChatMsgList(final String username) {
-            mChatLayout.setVisibility(View.VISIBLE);
-            mInput.setFocusableInTouchMode(true);
-            TranslateAnimation animation = new TranslateAnimation(1f, 1f, 0f, 1f);
-            animation.setDuration(300L);
-            mPrivateChatMsgLayout.startAnimation(animation);
-            mPrivateChatMsgMask.setBackgroundColor(Color.parseColor("#FAFAFA"));
-            mPrivateChatUserName.setText(username);
-            mPrivateChatMsgLayout.setVisibility(View.VISIBLE);
-            if (mPrivateChatAdapter.getItemCount() - 1 > 0) {
-                mPrivateChatMsgList.smoothScrollToPosition(mPrivateChatAdapter.getItemCount() - 1);// 进行定位
-            }
-            isPrivateChatMsg = true;
-        }
-
-        /**
-         * 隐藏私聊信息列表
-         */
-        public void hidePrivateChatMsgList() {
-            if (isPrivateChatMsg) {
-                hideEmoji();
-                // 展示公聊区域和公聊内容
-                mChatLayout.setVisibility(View.VISIBLE);
-                mChatList.setVisibility(View.VISIBLE);
-                mPrivateIcon.setVisibility(View.VISIBLE);
-                mInput.setText("");
-                mPrivateChatMsgMask.setBackgroundColor(Color.parseColor("#00000000"));
-                mPrivateChatMsgLayout.setVisibility(View.GONE);
-                isPrivateChatMsg = false;
-                isPrivate = false;
-            }
-        }
-
-        public void clearChatInput() {
-            mInput.setText("");
-            hideKeyboard();
-        }
-
-        public void hideKeyboard() {
-            hideEmoji();
-            mImm.hideSoftInputFromWindow(mInput.getWindowToken(), 0);
-        }
-
-        public void updatePrivateChat(ChatEntity chatEntity) {
-            if (isPrivateChatMsg && (chatEntity.isPublisher() ||
-                    chatEntity.getUserId().equals(mCurPrivateUserId))) { // 如果当前界面是私聊信息界面直接在该界面进行数据更新
-                mPrivateChatAdapter.add(chatEntity);
-                mPrivateChatMsgList.smoothScrollToPosition(mPrivateChatAdapter.getItemCount() - 1);// 进行定位
-            }
-            PrivateUser privateUser = new PrivateUser();
-            if (chatEntity.isPublisher()) {
-                privateUser.setId(chatEntity.getReceiveUserId());
-                privateUser.setName(chatEntity.getReceivedUserName());
-                privateUser.setAvatar(chatEntity.getReceiveUserAvatar());
-            } else {
-                privateUser.setId(chatEntity.getUserId());
-                privateUser.setName(chatEntity.getUserName());
-                privateUser.setAvatar(chatEntity.getUserAvatar());
-            }
-            privateUser.setMsg(chatEntity.getMsg());
-            privateUser.setTime(chatEntity.getTime());
-            // TODO 判断
-            privateUser.setRead(isPrivateChatMsg && (chatEntity.isPublisher() ||
-                    chatEntity.getUserId().equals(mCurPrivateUserId)));
-            mPrivateUserAdapter.add(privateUser);
-            if (!isAllPrivateChatRead()) {
-                mPrivateIcon.setImageResource(R.mipmap.video_ic_private_msg_new);
-            }
-            mPrivateChats.add(chatEntity);
-        }
-
-        public boolean onBackPressed() {
-            if (isEmojiShow) {
-                hideEmoji();
-                hideChatLayout();
-                return true;
-            }
-            if (isPrivateChatMsg) {
-                hidePrivateChatMsgList();
-                showPrivateChatUserList();
-                return true;
-            }
-            if (isPrivateChatUser) {
-                hidePrivateChatUserList();
-                return true;
-            }
-
+    // 检测是否是双击事件
+    private boolean isConsideredDoubleTap(MotionEvent firstUp, MotionEvent secondDown){
+        if (secondDown.getEventTime() - firstUp.getEventTime() > DOUBLE_TAP_TIMEOUT) {
             return false;
         }
-
-        public void addChatEntity(ChatEntity chatEntity) {
-            mChatAdapter.add(chatEntity);
-            mChatList.smoothScrollToPosition(mChatAdapter.getItemCount() - 1);
-        }
+        int deltaX =(int) firstUp.getX() - (int)secondDown.getX();
+        int deltaY =(int) firstUp.getY()- (int)secondDown.getY();
+        return deltaX * deltaX + deltaY * deltaY < 10000;
     }
 
-    //----------------------问答----------------------------
-    public class QaLayoutController {
-
-        @BindView(R.id.rv_qa_container)
-        RecyclerView mQaList;
-        @BindView(R.id.id_qa_input)
-        EditText qaInput;
-        @BindView(R.id.self_qa_invisible)
-        ImageView qaVisibleStatus;
-        @BindView(R.id.qa_show_tips)
-        TextView qaTips;
-
-        LiveQaAdapter mQaAdapter;
-
-        Context mContext;
-
-        public QaLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
-        }
-
-        public void initQaLayout() {
-            mQaList.setLayoutManager(new LinearLayoutManager(mContext));
-            mQaAdapter = new LiveQaAdapter(mContext);
-            mQaList.setAdapter(mQaAdapter);
-
-            mQaList.addItemDecoration(new DividerItemDecoration(PcLivePlayActivity.this, DividerItemDecoration.VERTICAL));
-
-            mQaList.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View view, MotionEvent motionEvent) {
-                    mImm.hideSoftInputFromWindow(qaInput.getWindowToken(), 0);
-                    return false;
-                }
-            });
-        }
-
-        public void clearQaInfo() {
-            mQaAdapter.resetQaInfos();
-        }
-
-        public void addQuestion(Question question) {
-            mQaAdapter.addQuestion(question);
-        }
-
-        public void showQuestion(String questionId) {
-            mQaAdapter.showQuestion(questionId);
-        }
-
-        public void addAnswer(Answer answer) {
-            mQaAdapter.addAnswer(answer);
-        }
-
-        @OnClick(R.id.id_qa_input)
-        void inputQaMsg() {
-
-        }
-
-        @OnClick(R.id.self_qa_invisible)
-        void changeShowQaStatus() {
-            if (qaVisibleStatus.isSelected()) {
-                qaVisibleStatus.setSelected(false);
-                qaTips.setText("显示所有回答");
-                mQaAdapter.setOnlyShowSelf(false);
-
-
-            } else {
-                qaVisibleStatus.setSelected(true);
-                qaTips.setText("只看我的回答");
-                mQaAdapter.setOnlyShowSelf(true);
-            }
-
-            removeTipsHideCallBack();
-            qaTips.setVisibility(View.VISIBLE);
-            handler.postDelayed(tipsRunnable, 3 * 1000);
-        }
-
-        Runnable tipsRunnable = new Runnable() {
-            @Override
-            public void run() {
-                qaTips.setVisibility(View.INVISIBLE);
-            }
-        };
-
-        public void removeTipsHideCallBack() {
-            handler.removeCallbacks(tipsRunnable);
-        }
-
-        @OnClick(R.id.id_qa_send)
-        void sendQaMsg() {
-
-            // 判断如果直播未开始，则告诉用户，无法提问
-            if (DWLive.getInstance().getPlayStatus() == DWLive.PlayStatus.PREPARING) {
-                toastOnUiThread("直播未开始，无法提问");
-                return;
-            }
-
-            // 直播中，提问判断内容是否符合要求，符合要求，进行提问
-            String questionMsg = qaInput.getText().toString().trim();
-            if (TextUtils.isEmpty(questionMsg)) {
-                toastOnUiThread("输入信息不能为空");
-            } else {
-                try {
-                    dwLive.sendQuestionMsg(questionMsg);
-                    qaInput.setText("");
-                    mImm.hideSoftInputFromWindow(qaInput.getWindowToken(), 0);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    // 判断当前屏幕朝向是否为竖屏
+    private boolean isPortrait() {
+        int mOrientation = getApplicationContext().getResources().getConfiguration().orientation;
+        return mOrientation != Configuration.ORIENTATION_LANDSCAPE;
     }
 
-    //-----------------------简介----------------------------
-    public class IntroLayoutController {
-
-        @BindView(R.id.tv_intro_title)
-        TextView title;
-
-        @BindView(R.id.content_layer)
-        LinearLayout content_layer;
-
-        Context mContext;
-
-        public IntroLayoutController(Context context, View view) {
-            mContext = context;
-            ButterKnife.bind(this, view);
-        }
-
-        public void initIntro() {
-            if (DWLive.getInstance().getRoomInfo() != null) {
-                title.setText(DWLive.getInstance().getRoomInfo().getName());
-                content_layer.removeAllViews();
-                content_layer.addView(new MixedTextView(PcLivePlayActivity.this, DWLive.getInstance().getRoomInfo().getDesc()));
-            }
-        }
+    // 检测网络是否可用
+    public boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm.getActiveNetworkInfo();
+        return ni != null && ni.isAvailable();
     }
+
 }
