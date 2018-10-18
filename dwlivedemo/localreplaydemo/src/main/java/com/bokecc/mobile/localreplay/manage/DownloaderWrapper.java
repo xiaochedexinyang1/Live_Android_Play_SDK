@@ -1,5 +1,8 @@
 package com.bokecc.mobile.localreplay.manage;
 
+import android.util.Log;
+import android.widget.Toast;
+
 import com.bokecc.mobile.localreplay.util.DataSet;
 import com.bokecc.mobile.localreplay.util.DownloadConfig;
 import com.bokecc.mobile.localreplay.util.DownloadUtil;
@@ -90,8 +93,11 @@ public class DownloaderWrapper {
 //            File unzipDir = new File(downloadFile.getParentFile(), name.substring(0, name.indexOf(".")));
             String dir = DownloadUtil.getUnzipDir(downloadFile);
             unZiper = new UnZiper(new UnZiper.UnZipListener() {
+
                 @Override
-                public void onError(IOException e) {}
+                public void onError(int errorCode, String message) {
+                    Log.e("111", "解压失败，错误码 = " + errorCode + ", 错误内容" + message);
+                }
 
                 @Override
                 public void onUnZipFinish() {
@@ -164,8 +170,8 @@ public class DownloaderWrapper {
         if (downloader != null) {
             if (downloader.getStatus() == DownloadUtil.FINISH) {
                 downloadInfo.setStatus(unZiper.getStatus())
-                            .setStart(downloader.getEnd())
-                            .setEnd(downloader.getEnd());
+                        .setStart(downloader.getEnd())
+                        .setEnd(downloader.getEnd());
             } else {
                 downloadInfo.setStatus(downloader.getStatus());
 

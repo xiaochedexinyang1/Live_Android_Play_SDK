@@ -44,6 +44,9 @@
         android:largeHeap="true"
         android:theme="@style/AppTheme">
 
+        <!-- 兼容 Android P -->
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+
         <activity android:name=".SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

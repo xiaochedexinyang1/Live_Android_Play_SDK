@@ -27,6 +27,7 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.bokecc.mobile.localreplay.adapter.LivePublicChatAdapter;
 import com.bokecc.mobile.localreplay.adapter.LiveQaAdapter;
@@ -47,6 +48,7 @@ import com.bokecc.sdk.mobile.live.pojo.Question;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayAnswerMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayBroadCastMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayChatMsg;
+import com.bokecc.sdk.mobile.live.replay.pojo.ReplayLiveInfo;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayPageInfo;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayQAMsg;
 import com.bokecc.sdk.mobile.live.replay.pojo.ReplayQuestionMsg;
@@ -355,7 +357,20 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
         }
 
         @Override
-        public void onInitFinished() {}
+        public void onInitFinished() {
+            // 回放的直播开始时间和结束时间必须在登录成功后再获取，否则为空
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ReplayLiveInfo replayLiveInfo = DWLiveLocalReplay.getInstance().getReplayLiveInfo();
+                    if (replayLiveInfo != null) {
+                        Toast.makeText(ReplayActivity.this, "直播开始时间：" + replayLiveInfo.getStartTime() + "\n"
+                                + "直播结束时间：" +  replayLiveInfo.getEndTime(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
+        }
     };
 
     @Override

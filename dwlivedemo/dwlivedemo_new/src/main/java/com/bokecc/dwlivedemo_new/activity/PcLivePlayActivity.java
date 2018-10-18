@@ -1,6 +1,8 @@
 package com.bokecc.dwlivedemo_new.activity;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
@@ -67,6 +69,7 @@ import com.bokecc.sdk.mobile.live.pojo.QualityInfo;
 import com.bokecc.sdk.mobile.live.pojo.Question;
 import com.bokecc.sdk.mobile.live.pojo.QuestionnaireInfo;
 import com.bokecc.sdk.mobile.live.pojo.QuestionnaireStatisInfo;
+import com.bokecc.sdk.mobile.live.pojo.RoomDocInfo;
 import com.bokecc.sdk.mobile.live.pojo.TemplateInfo;
 import com.bokecc.sdk.mobile.live.rtc.RtcClient;
 import com.bokecc.sdk.mobile.live.widget.DocView;
@@ -502,6 +505,9 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         } else {
             pcLiveLandscapeViewManager.OnPlayClick();
         }
+
+        // TODO 测试历史文档切换
+        // showDocChangeDialog();
     }
 
     private void showNorRtcIcon() {
@@ -2057,6 +2063,67 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm.getActiveNetworkInfo();
         return ni != null && ni.isAvailable();
+    }
+
+    /**
+     * 展示文档切换的对话框
+     */
+    private void showDocChangeDialog() {
+        HashMap<String, RoomDocInfo> docInfos = dwLive.getRoomDocInfos();
+
+        final ArrayList<Integer> it = new ArrayList<>();
+        final ArrayList<String> st = new ArrayList<>();
+
+        int length = 0;
+
+        for(Map.Entry<String, RoomDocInfo> entry: docInfos.entrySet()) {
+            length += entry.getValue().getPages().size();
+        }
+
+        for(RoomDocInfo docInfo : docInfos.values()) {
+            length += docInfo.getPages().size();
+        }
+
+        final String items[] = new String[length];
+
+        int index = 0;
+        for(Map.Entry<String, RoomDocInfo> entry: docInfos.entrySet()) {
+            for (int i = 0; i < entry.getValue().getPages().size(); i++) {
+                it.add(entry.getValue().getPages().valueAt(i).getPageIndex());
+                st.add(entry.getValue().getDocId());
+                items[index] = entry.getValue().getDocName() + "-->" + entry.getValue().getPages().valueAt(i).getPageIndex();
+                index++;
+            }
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this,3);
+        builder.setTitle("文档列表");
+        // builder.setMessage("是否确认退出?"); //设置内容
+        builder.setIcon(R.mipmap.ic_launcher);
+        // 设置列表显示，注意设置了列表显示就不要设置builder.setMessage()了，否则列表不起作用。
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                Toast.makeText(PcLivePlayActivity.this, items[which], Toast.LENGTH_SHORT).show();
+                dwLive.changePageTo(st.get(which), it.get(which));
+            }
+        });
+        builder.setPositiveButton("切成自由模式", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dwLive.changeDocModeType(DWLive.DocModeType.FREE_MODE);
+                Toast.makeText(PcLivePlayActivity.this, "切成自由模式", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("切成跟随模式", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dwLive.changeDocModeType(DWLive.DocModeType.NORMAL_MODE);
+                Toast.makeText(PcLivePlayActivity.this, "切成跟随模式", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.create().show();
     }
 
 }

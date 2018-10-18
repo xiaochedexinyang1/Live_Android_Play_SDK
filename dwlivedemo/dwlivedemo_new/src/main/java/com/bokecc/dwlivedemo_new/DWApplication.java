@@ -3,6 +3,7 @@ package com.bokecc.dwlivedemo_new;
 import android.app.Application;
 import android.content.Context;
 
+import com.bokecc.sdk.mobile.live.DWLiveEngine;
 import com.bokecc.sdk.mobile.live.logging.LogHelper;
 import com.bokecc.sdk.mobile.push.DWPushEngine;
 import com.tencent.bugly.crashreport.CrashReport;
@@ -31,6 +32,8 @@ public class DWApplication extends Application {
         CrashReport.initCrashReport(getApplicationContext(), "636ee61162", true);
         // CC PUSH SDK
         DWPushEngine.init(this, BuildConfig.LOG_FLAG);
+        // CC LIVE SDK
+        DWLiveEngine.init(this);
         // 初始化日志记录模块
         LogHelper.getInstance().init(context, true, null);
     }

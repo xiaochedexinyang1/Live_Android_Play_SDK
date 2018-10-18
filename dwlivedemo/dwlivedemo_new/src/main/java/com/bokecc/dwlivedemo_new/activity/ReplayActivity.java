@@ -618,7 +618,10 @@ public class ReplayActivity extends BaseActivity implements TextureView.SurfaceT
                                         temp_chatEntities.add(entity);
                                     }
                                 }
-                                chatLayoutController.addChatEntities(temp_chatEntities);
+                                if (chatLayoutController != null) {
+                                    chatLayoutController.addChatEntities(temp_chatEntities);
+                                }
+
                             }
                         });
                     }

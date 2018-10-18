@@ -1,16 +1,8 @@
 package com.bokecc.mobile.localreplay.util;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import com.bokecc.sdk.mobile.live.util.SupZipTool;
+
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 /**
  * 解压缩核心类
@@ -21,9 +13,10 @@ public class UnZiper {
 
         /**
          * 解压失败
-         * @param e
+         * @param errorCode 错误码
+         * @param message   错误内容
          */
-        void onError(IOException e);
+        void onError(int errorCode, String message);
 
         /**
          * 解压完成
@@ -66,23 +59,22 @@ public class UnZiper {
             unzipThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
-                        status = ZIP_ING;
+                    status = ZIP_ING;
 
-                        upZipFile(oriFile, dir);
+                    // 调用解压方法
+                    int resultCode = SupZipTool.decompressZipDec(oriFile.getAbsolutePath(), dir);
 
+                    if (resultCode != 0) {
+                        status = ZIP_ERROR;
+                        if (listener != null) {
+                            listener.onError(resultCode, SupZipTool.getResultMessage(resultCode));
+                        }
+                    } else {
                         oriFile.delete();
                         status = ZIP_FINISH;
                         if (listener != null) {
                             listener.onUnZipFinish();
                         }
-
-                    } catch (IOException e) {
-                        status = ZIP_ERROR;
-                        if (listener != null) {
-                            listener.onError(e);
-                        }
-
                     }
                 }
             });
@@ -108,51 +100,4 @@ public class UnZiper {
         return this;
     }
 
-    /**
-     * 解压缩功能.
-     * 将zipFile文件解压到folderPath目录下.
-     * @throws Exception
-     */
-    private int upZipFile(File zipFile, String folderPath)throws ZipException,IOException {
-        //public static void upZipFile() throws Exception{
-        ZipFile zFile = new ZipFile(zipFile);
-        Enumeration zList = zFile.entries();
-        ZipEntry ze=null;
-
-        byte[] buf = new byte[1024 * 1000];
-        while(zList.hasMoreElements()){
-            ze = (ZipEntry)zList.nextElement();
-
-            if(ze.isDirectory()){
-                String dirstr = folderPath + "/" + ze.getName();
-                dirstr = new String(dirstr.getBytes("8859_1"), "GB2312");
-                File f = new File(dirstr);
-                f.mkdirs();
-                continue;
-            }
-
-            File fie = new File(folderPath, ze.getName());
-
-            File parentDir = fie.getParentFile();
-            if (!parentDir.exists()) {
-                parentDir.mkdirs();
-            }
-
-            OutputStream os = new BufferedOutputStream(new FileOutputStream(fie));
-            InputStream is = new BufferedInputStream(zFile.getInputStream(ze));
-
-            try {
-                int readLen = 0;
-
-                while ((readLen = is.read(buf, 0, 1024 * 1000)) != -1) {
-                    os.write(buf, 0, readLen);
-                }
-            } finally {
-                is.close();
-                os.close();
-            }
-        }
-        zFile.close();
-        return 0;
-    }
 }

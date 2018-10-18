@@ -124,7 +124,6 @@ public class QaLayoutController extends BaseLayoutController {
 
     @OnClick(R.id.id_qa_send)
     void sendQaMsg() {
-
         // 判断如果直播未开始，则告诉用户，无法提问
         if (DWLive.getInstance().getPlayStatus() == DWLive.PlayStatus.PREPARING) {
             toastOnUiThread(mContext, "直播未开始，无法提问");
@@ -137,9 +136,14 @@ public class QaLayoutController extends BaseLayoutController {
             toastOnUiThread(mContext, "输入信息不能为空");
         } else {
             try {
-                DWLive.getInstance().sendQuestionMsg(questionMsg);
-                qaInput.setText("");
-                mImm.hideSoftInputFromWindow(qaInput.getWindowToken(), 0);
+                if (questionMsg.length() <= 300) {
+                    DWLive.getInstance().sendQuestionMsg(questionMsg);
+                    qaInput.setText("");
+                    mImm.hideSoftInputFromWindow(qaInput.getWindowToken(), 0);
+                } else {
+                    mImm.hideSoftInputFromWindow(qaInput.getWindowToken(), 0);
+                    toastOnUiThread(mContext, "字符数超过300字");
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
