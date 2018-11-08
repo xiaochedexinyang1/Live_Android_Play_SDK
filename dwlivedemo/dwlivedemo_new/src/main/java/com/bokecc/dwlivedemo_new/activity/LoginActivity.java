@@ -37,6 +37,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
+/**
+ * 登录页面
+ */
 public class LoginActivity extends BaseActivity {
 
     @BindView(R.id.iv_back)

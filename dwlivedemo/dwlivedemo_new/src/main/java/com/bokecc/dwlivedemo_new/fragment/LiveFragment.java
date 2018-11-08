@@ -140,9 +140,6 @@ public class LiveFragment extends BaseFragment {
             }
         }, loginInfo);
 
-        // 设置是否使用Https
-        DWLive.getInstance().setSecure(true);
-
         // 执行登录操作
         DWLive.getInstance().startLogin();
     }

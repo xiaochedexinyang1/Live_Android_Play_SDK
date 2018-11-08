@@ -196,9 +196,6 @@ public class ReplayFragment extends BaseFragment {
             }
         }, replayLoginInfo);
 
-        // 设置是否使用Https
-        DWLiveReplay.getInstance().setSecure(false);
-
         // 执行登录操作
         DWLiveReplay.getInstance().startLogin();
     }

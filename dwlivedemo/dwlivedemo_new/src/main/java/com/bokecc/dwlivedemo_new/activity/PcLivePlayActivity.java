@@ -1091,6 +1091,24 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
         }
 
         /**
+         * 切换数据源
+         *
+         * @param switchInfo 切换数据源信息 <br>
+         * 注：<br>
+         * 1. 返回数据格式为：{"source_type":"10","source_type_desc":"数据源类型：摄像头打开"} <br>
+         * 2. 目前此回调只会在有文档的直播间模版下才会触发
+         */
+        @Override
+        public void onSwitchSource(final String switchInfo) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(PcLivePlayActivity.this, switchInfo, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        /**
          * 收到历史广播信息(目前服务端只返回最后一条历史广播)
          *
          * @param msgs 广播消息列表
@@ -1145,13 +1163,24 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
 
         }
 
+        /**
+         * 用户被踢出房间的回调
+         * @param type 踢出房间的类型<br>
+         * 10:在允许重复登录前提下，后进入者会登录会踢出先前登录者<br>
+         * 20:讲师、助教、主持人通过页面踢出按钮踢出用户
+         */
         @Override
-        public void onKickOut() {
+        public void onKickOut(final int type) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "您已被踢出直播间", Toast.LENGTH_SHORT).show();
-                    finish();
+                    if (type == 10) {
+                        Toast.makeText(getApplicationContext(), "后登录者将您踢出直播间", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else if (type == 20) {
+                        Toast.makeText(getApplicationContext(), "讲师/助教/主持人将您踢出直播间", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
                 }
             });
         }
@@ -1401,11 +1430,11 @@ public class PcLivePlayActivity extends BaseActivity implements TextureView.Surf
     public void changeVideoAudioStatus() {
         if (isVideo) {
             isVideo = false;
-            dwLive.changePlayMode(DWLive.PlayMode.SOUND);
+            dwLive.changePlayMode(null, DWLive.PlayMode.SOUND);
             setRlSoundLayout(View.VISIBLE);
         } else {
             isVideo = true;
-            dwLive.changePlayMode(DWLive.PlayMode.VIDEO);
+            dwLive.changePlayMode(surface, DWLive.PlayMode.VIDEO);
             setRlSoundLayout(View.INVISIBLE);
         }
 
